@@ -1,38 +1,28 @@
-import fs from 'fs';
-import path from 'path';
+// pages/api/subscribe.js
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { email } = req.body;
+  const { email } = req.body
 
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ error: 'Invalid email' });
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email required' })
   }
 
-  const sanitizedEmail = email.trim().toLowerCase();
+  const { data, error } = await supabase.from('emails').insert([{ email }])
 
-  const filePath = path.join(process.cwd(), 'data', 'emails.csv');
-
-  // Create data folder if it doesn't exist
-  if (!fs.existsSync(path.dirname(filePath))) {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  if (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Something went wrong' })
   }
 
-  // If file doesn't exist, create it with headers
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, 'Email,Timestamp\n');
-  }
-
-  const existingData = fs.readFileSync(filePath, 'utf-8');
-  if (existingData.includes(sanitizedEmail)) {
-    return res.status(409).json({ error: 'Email already subscribed' });
-  }
-
-  const timestamp = new Date().toISOString().replace('T', ' ').split('.')[0];
-  fs.appendFileSync(filePath, `${sanitizedEmail},${timestamp}\n`);
-
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, message: 'Email saved' })
 }
