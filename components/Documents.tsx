@@ -4,36 +4,40 @@ import { auth } from "@clerk/nextjs/server";
 import Document from "./Document";
 
 async function Documents() {
-  auth().protect();
-
   const { userId } = await auth();
+  const effectiveUserId = userId || "guest";
 
-  if (!userId) {
-    throw new Error("User not found");
+  let docs: Array<{ id: string; name: string; downloadUrl: string; size: number }> = [];
+
+  try {
+    const documentsSnapshot = await adminDb
+      .collection("users")
+      .doc(effectiveUserId)
+      .collection("files")
+      .get();
+
+    docs = documentsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name,
+      downloadUrl: doc.data().downloadUrl,
+      size: doc.data().size,
+    }));
+  } catch (error) {
+    console.warn("Could not fetch documents from Firebase Admin (check service_key.json):", error);
   }
 
-  const documentsSnapshot = await adminDb
-    .collection("users")
-    .doc(userId)
-    .collection("files")
-    .get();
-
   return (
-    <div className="flex flex-wrap p-5 bg-gray-100 justify-center lg:justify-start rounded-sm gap-5 max-w-7xl mx-auto">
+    <div className="flex flex-wrap p-6 bg-transparent justify-center lg:justify-start rounded-2xl gap-6 max-w-7xl mx-auto">
       {/* Map through the documents */}
-      {documentsSnapshot.docs.map((doc) => {
-        const { name, downloadUrl, size } = doc.data();
-
-        return (
-          <Document
-            key={doc.id}
-            id={doc.id}
-            name={name}
-            size={size}
-            downloadUrl={downloadUrl}
-          />
-        );
-      })}
+      {docs.map((doc) => (
+        <Document
+          key={doc.id}
+          id={doc.id}
+          name={doc.name}
+          size={doc.size}
+          downloadUrl={doc.downloadUrl}
+        />
+      ))}
 
       <PlaceholderDocument />
     </div>

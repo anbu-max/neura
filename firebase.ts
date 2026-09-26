@@ -3,12 +3,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyApcA8lrxAJvnVdknPOsKBAPze7m0jB8Uw",
-  authDomain: "chat-with-pdf-challenge.firebaseapp.com",
-  projectId: "chat-with-pdf-challenge",
-  storageBucket: "chat-with-pdf-challenge.appspot.com",
-  messagingSenderId: "63913719761",
-  appId: "1:63913719761:web:1b2bea43afcdfcdae1d2f0",
+  apiKey: "AIzaSyDXQLH7Etlk2jUsXllgFNstLt0bWx2GSSo",
+  authDomain: "neura-ai-793fb.firebaseapp.com",
+  projectId: "neura-ai-793fb",
+  storageBucket: "neura-ai-793fb.firebasestorage.app",
+  messagingSenderId: "267094249630",
+  appId: "1:267094249630:web:e140a765f012a20a126b8f",
+  measurementId: "G-Y7ZVC80R7V",
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();

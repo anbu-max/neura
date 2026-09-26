@@ -4,18 +4,19 @@ import { Message } from "@/components/Chat";
 import { adminDb } from "@/firebaseAdmin";
 import { generateLangchainCompletion } from "@/lib/langchain";
 import { auth } from "@clerk/nextjs/server";
+import { detectAndInjectMemoryPrompt } from "@/lib/memoryCommands";
 // import { generateLangchainCompletion } from "@/lib/langchain";
 
 const PRO_LIMIT = 20;
 const FREE_LIMIT = 2;
 
 export async function askQuestion(id: string, question: string) {
-  auth().protect();
   const { userId } = await auth();
+  const effectiveUserId = userId || "guest_user";
 
   const chatRef = adminDb
     .collection("users")
-    .doc(userId!)
+    .doc(effectiveUserId)
     .collection("files")
     .doc(id)
     .collection("chat");
@@ -27,28 +28,20 @@ export async function askQuestion(id: string, question: string) {
   );
 
   //   Check membership limits for messages in a document
-  const userRef = await adminDb.collection("users").doc(userId!).get();
-
-  console.log("DEBUG 2", userRef.data());
+  let hasActiveMembership = false;
+  try {
+    const userRef = await adminDb.collection("users").doc(effectiveUserId).get();
+    hasActiveMembership = !!userRef.data()?.hasActiveMembership;
+  } catch (err) {
+    console.warn("Could not check membership", err);
+  }
 
   //   check if user is on FREE plan and has asked more than the FREE number of questions
-  if (!userRef.data()?.hasActiveMembership) {
-    console.log("Debug 3", userMessages.length, FREE_LIMIT);
+  if (!hasActiveMembership) {
     if (userMessages.length >= FREE_LIMIT) {
       return {
         success: false,
-        message: `You'll need to upgrade to PRO to ask more than ${FREE_LIMIT} questions! 😢`,
-      };
-    }
-  }
-
-  // check if user is on PRO plan and has asked more than 100 questions
-  if (userRef.data()?.hasActiveMembership) {
-    console.log("Debug 4", userMessages.length, PRO_LIMIT);
-    if (userMessages.length >= PRO_LIMIT) {
-      return {
-        success: false,
-        message: `You've reached the PRO limit of ${PRO_LIMIT} questions per document! 😢`,
+        message: `You've reached the free limit of ${FREE_LIMIT} questions on this document. Upgrade to Pro for unlimited questions & memory tools! 🚀`,
       };
     }
   }
@@ -61,8 +54,11 @@ export async function askQuestion(id: string, question: string) {
 
   await chatRef.add(userMessage);
 
-  //   Generate AI Response
-  const reply = await generateLangchainCompletion(id, question);
+  //   Process Memory Slash Commands (e.g. /firstprinciple, /palace, /flashcard, /quiz, /cinematic)
+  const { processedQuestion } = detectAndInjectMemoryPrompt(question);
+
+  //   Generate AI Response with Memory Framework
+  const reply = await generateLangchainCompletion(id, processedQuestion);
 
   const aiMessage: Message = {
     role: "ai",

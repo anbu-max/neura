@@ -10,12 +10,12 @@ async function ChatToFilePage({
     id: string;
   };
 }) {
-  auth().protect();
   const { userId } = await auth();
+  const effectiveUserId = userId || "guest";
 
   const ref = await adminDb
     .collection("users")
-    .doc(userId!)
+    .doc(effectiveUserId)
     .collection("files")
     .doc(id)
     .get();

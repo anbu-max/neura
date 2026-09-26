@@ -16,7 +16,7 @@ export enum StatusText {
   GENERATING = "Generating AI Embeddings, This will only take a few seconds...",
 }
 
-export type Status = StatusText[keyof StatusText];
+export type Status = StatusText;
 
 function useUpload() {
   const [progress, setProgress] = useState<number | null>(null);
@@ -26,15 +26,14 @@ function useUpload() {
   const router = useRouter();
 
   const handleUpload = async (file: File) => {
-    if (!file || !user) return;
+    if (!file) return;
 
-    // TODO: FREE/PRO limitations...
-
-    const fileIdToUploadTo = uuidv4(); // example: 123e4567-e89b-12d3-a456-426614174000
+    const effectiveUserId = user?.id || "guest_user";
+    const fileIdToUploadTo = uuidv4();
 
     const storageRef = ref(
       storage,
-      `users/${user.id}/files/${fileIdToUploadTo}`
+      `users/${effectiveUserId}/files/${fileIdToUploadTo}`
     );
 
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -57,7 +56,7 @@ function useUpload() {
         const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
 
         setStatus(StatusText.SAVING);
-        await setDoc(doc(db, "users", user.id, "files", fileIdToUploadTo), {
+        await setDoc(doc(db, "users", effectiveUserId, "files", fileIdToUploadTo), {
           name: file.name,
           size: file.size,
           type: file.type,

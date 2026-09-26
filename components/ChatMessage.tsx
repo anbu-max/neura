@@ -11,36 +11,47 @@ function ChatMessage({ message }: { message: Message }) {
   const { user } = useUser();
 
   return (
-    <div className={`chat ${isHuman ? "chat-end" : "chat-start"}`}>
+    <div className={`chat ${isHuman ? "chat-end" : "chat-start"} mb-4`}>
       <div className="chat-image avatar">
-        <div className="w-10 rounded-full">
+        <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border border-gray-100 shadow-2xs">
           {isHuman ? (
-            user?.imageUrl && (
+            user?.imageUrl ? (
               <Image
-                src={user?.imageUrl}
+                src={user.imageUrl}
                 alt="Profile Picture"
-                width={40}
-                height={40}
-                className="rounded-full"
+                width={36}
+                height={36}
+                className="rounded-full object-cover"
               />
+            ) : (
+              <div className="h-full w-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
+                {user?.firstName?.[0] || "U"}
+              </div>
             )
           ) : (
-            <div className="h-10 w-10 bg-indigo-600 flex items-center justify-center">
-              <BotIcon className="text-white h-7 w-7 " />
+            <div className="h-full w-full bg-purple-600 flex items-center justify-center text-white">
+              <BotIcon className="h-5 w-5" />
             </div>
           )}
         </div>
       </div>
 
       <div
-        className={`chat-bubble prose ${isHuman && "bg-indigo-600 text-white"}`}
+        className={`chat-bubble text-sm leading-relaxed ${
+          isHuman
+            ? "bg-purple-600 text-white rounded-2xl rounded-tr-none shadow-xs font-medium"
+            : "bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none shadow-xs border border-gray-200/60"
+        }`}
       >
         {message.message === "Thinking..." ? (
-          <div className="flex items-center justify-center">
-            <Loader2Icon className="animate-spin h-5 w-5 text-white" />
+          <div className="flex items-center gap-2 py-1">
+            <Loader2Icon className="animate-spin h-4 w-4 text-purple-600" />
+            <span className="text-xs text-gray-500 font-medium">Analyzing document...</span>
           </div>
         ) : (
-          <Markdown>{message.message}</Markdown>
+          <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2">
+            <Markdown>{message.message}</Markdown>
+          </div>
         )}
       </div>
     </div>

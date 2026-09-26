@@ -4,9 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 export async function generateEmbeddings(docId: string) {
-  auth().protect(); // Protect this route with Clerk
-
-  //   turn a PDF into embeddings [0.0123234, 0.234234, ...]
+  // Allow both guest users and signed-in users
   await generateEmbeddingsInPineconeVectorStore(docId);
 
   revalidatePath("/dashboard");

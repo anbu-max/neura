@@ -7,14 +7,13 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 export async function deleteDocument(docId: string) {
-  auth().protect();
-
   const { userId } = await auth();
+  const effectiveUserId = userId || "guest_user";
 
   // Delete the document from the database
   await adminDb
     .collection("users")
-    .doc(userId!)
+    .doc(effectiveUserId)
     .collection("files")
     .doc(docId)
     .delete();

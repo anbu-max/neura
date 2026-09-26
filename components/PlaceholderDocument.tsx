@@ -21,17 +21,18 @@ function PlaceholderDocument() {
   return (
     <Button
       onClick={handleClick}
-      className="flex flex-col items-center w-64 h-80 rounded-xl bg-gray-200 drop-shadow-md text-gray-400"
+      className="flex flex-col items-center justify-center w-64 h-80 rounded-2xl bg-purple-50/40 border-2 border-dashed border-purple-200 hover:border-purple-500 hover:bg-purple-50 hover:shadow-md text-purple-600 transition-all duration-200 group"
     >
       {isOverFileLimit ? (
-        <FrownIcon className="h-16 w-16" />
+        <FrownIcon className="h-14 w-14 text-amber-500 mb-3" />
       ) : (
-        <PlusCircleIcon className="h-16 w-16" />
+        <PlusCircleIcon className="h-14 w-14 text-purple-500 group-hover:scale-110 transition-transform mb-3" />
       )}
 
-      <p className="font-semibold">
+      <p className="font-bold text-sm text-gray-700 group-hover:text-purple-700">
         {isOverFileLimit ? "Upgrade to add more documents" : "Add a document"}
       </p>
+      <span className="text-xs text-gray-400 mt-1">PDF up to 10MB</span>
     </Button>
   );
 }

@@ -24,15 +24,13 @@ export const indexName = "papafam";
 
 async function fetchMessagesFromDB(docId: string) {
   const { userId } = await auth();
-  if (!userId) {
-    throw new Error("User not found");
-  }
+  const effectiveUserId = userId || "guest_user";
 
   console.log("--- Fetching chat history from the firestore database... ---");
   // Get the last 6 messages from the chat history
   const chats = await adminDb
     .collection(`users`)
-    .doc(userId)
+    .doc(effectiveUserId)
     .collection("files")
     .doc(docId)
     .collection("chat")
@@ -56,15 +54,12 @@ async function fetchMessagesFromDB(docId: string) {
 
 export async function generateDocs(docId: string) {
   const { userId } = await auth();
-
-  if (!userId) {
-    throw new Error("User not found");
-  }
+  const effectiveUserId = userId || "guest_user";
 
   console.log("--- Fetching the download URL from Firebase... ---");
   const firebaseRef = await adminDb
     .collection("users")
-    .doc(userId)
+    .doc(effectiveUserId)
     .collection("files")
     .doc(docId)
     .get();

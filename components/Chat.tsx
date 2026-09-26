@@ -3,8 +3,32 @@
 import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Loader2Icon } from "lucide-react";
-// import ChatMessage from "./ChatMessage";
+import {
+  Loader2Icon,
+  Sparkles,
+  Layers,
+  HelpCircle,
+  BookOpen,
+  Binary,
+  Castle,
+  Clapperboard,
+  Smile,
+  Calendar,
+  GitFork,
+  FileCheck,
+  ChevronRight,
+  Command as CommandIcon,
+  Eye,
+  User as UserIcon,
+  Car,
+  Hash,
+  Contact,
+  Link2,
+  SpellCheck,
+  Target,
+  HeartHandshake,
+  Zap,
+} from "lucide-react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useUser } from "@clerk/nextjs";
 import { collection, orderBy, query } from "firebase/firestore";
@@ -12,6 +36,8 @@ import { db } from "@/firebase";
 import { askQuestion } from "@/actions/askQuestion";
 import ChatMessage from "./ChatMessage";
 import { useToast } from "./ui/use-toast";
+import { MEMORY_COMMANDS, getMatchingCommands, MemoryCommand } from "@/lib/memoryCommands";
+import Link from "next/link";
 
 export type Message = {
   id?: string;
@@ -20,21 +46,49 @@ export type Message = {
   createdAt: Date;
 };
 
+const iconMap: { [key: string]: React.ElementType } = {
+  HeartHandshake,
+  Eye,
+  User: UserIcon,
+  Car,
+  Castle,
+  Paperclip: BookOpen,
+  Hash,
+  Contact,
+  Link2,
+  SpellCheck,
+  Target,
+  Calendar,
+  Binary,
+  Layers,
+  HelpCircle,
+  Smile,
+  GitFork,
+  FileCheck,
+  Sparkles,
+  Zap,
+};
+
 function Chat({ id }: { id: string }) {
   const { user } = useUser();
   const { toast } = useToast();
+  const effectiveUserId = user?.id || "guest_user";
 
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isPending, startTransition] = useTransition();
   const bottomOfChatRef = useRef<HTMLDivElement>(null);
 
-  const [snapshot, loading, error] = useCollection(
-    user &&
-      query(
-        collection(db, "users", user?.id, "files", id, "chat"),
-        orderBy("createdAt", "asc")
-      )
+  // Slash commands state
+  const [showCommands, setShowCommands] = useState(false);
+  const [filteredCommands, setFilteredCommands] = useState<MemoryCommand[]>(MEMORY_COMMANDS);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const [snapshot, loading] = useCollection(
+    query(
+      collection(db, "users", effectiveUserId, "files", id, "chat"),
+      orderBy("createdAt", "asc")
+    )
   );
 
   useEffect(() => {
@@ -46,19 +100,13 @@ function Chat({ id }: { id: string }) {
   useEffect(() => {
     if (!snapshot) return;
 
-    console.log("Updated snapshot", snapshot.docs);
-
-    // get second last message to check if the AI is thinking
     const lastMessage = messages.pop();
-
     if (lastMessage?.role === "ai" && lastMessage.message === "Thinking...") {
-      // return as this is a dummy placeholder message
       return;
     }
 
     const newMessages = snapshot.docs.map((doc) => {
       const { role, message, createdAt } = doc.data();
-
       return {
         id: doc.id,
         role,
@@ -68,18 +116,56 @@ function Chat({ id }: { id: string }) {
     });
 
     setMessages(newMessages);
-
-    // Ignore messages dependancy warning here... we dont want an infinite loop
   }, [snapshot]);
+
+  // Handle Input Changes & Slash Autocomplete
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInput(val);
+
+    if (val.startsWith("/")) {
+      const matches = getMatchingCommands(val);
+      setFilteredCommands(matches);
+      setShowCommands(matches.length > 0);
+      setSelectedIndex(0);
+    } else {
+      setShowCommands(false);
+    }
+  };
+
+  const selectCommand = (cmd: MemoryCommand) => {
+    setInput(`${cmd.slash} `);
+    setShowCommands(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showCommands && filteredCommands.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        if (filteredCommands[selectedIndex]) {
+          e.preventDefault();
+          selectCommand(filteredCommands[selectedIndex]);
+        }
+      } else if (e.key === "Escape") {
+        setShowCommands(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const q = input;
+    const q = input.trim();
+    if (!q) return;
 
     setInput("");
+    setShowCommands(false);
 
-    // Optimistic UI update
     setMessages((prev) => [
       ...prev,
       {
@@ -97,49 +183,87 @@ function Chat({ id }: { id: string }) {
     startTransition(async () => {
       const { success, message } = await askQuestion(id, q);
 
-      console.log("DEBUG", success, message);
-
       if (!success) {
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "Upgrade to Pro",
           description: message,
         });
 
         setMessages((prev) =>
-          prev.slice(0, prev.length - 1).concat([
-            {
-              role: "ai",
-              message: `Whoops... ${message}`,
-              createdAt: new Date(),
-            },
-          ])
+          prev.filter((msg) => msg.message !== "Thinking...")
         );
       }
     });
   };
 
   return (
-    <div className="flex flex-col h-full overflow-scroll">
-      {/* Chat contents */}
-      <div className="flex-1 w-full">
-        {/* chat messages... */}
-
+    <div className="flex flex-col h-full overflow-hidden bg-white relative">
+      {/* Chat messages */}
+      <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6">
         {loading ? (
-          <div className="flex items-center justify-center">
-            <Loader2Icon className="animate-spin h-20 w-20 text-indigo-600 mt-20" />
+          <div className="flex flex-col items-center justify-center mt-20 gap-3">
+            <Loader2Icon className="animate-spin h-10 w-10 text-purple-600" />
+            <span className="text-sm text-gray-500 font-medium">Loading memory stream...</span>
           </div>
         ) : (
-          <div className="p-5">
+          <div className="space-y-4 max-w-3xl mx-auto">
             {messages.length === 0 && (
-              <ChatMessage
-                key={"placeholder"}
-                message={{
-                  role: "ai",
-                  message: "Ask me anything about the document!",
-                  createdAt: new Date(),
-                }}
-              />
+              <div className="bg-purple-50/50 border border-purple-100 rounded-3xl p-6 text-center max-w-lg mx-auto my-6 space-y-3 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center mx-auto shadow-sm">
+                  <Sparkles className="w-6 h-6 fill-white" />
+                </div>
+                <h3 className="font-extrabold text-gray-900 text-lg">
+                  Unlimited Memory AI Assistant
+                </h3>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                  Ask questions, summarize chapters, or type <span className="font-mono font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">/</span> to activate cognitive study frameworks.
+                </p>
+                <div className="pt-2 flex flex-wrap gap-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "memory") || MEMORY_COMMANDS[0])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    ❤️ /memory
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "see") || MEMORY_COMMANDS[1])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    👁️ /see
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "body") || MEMORY_COMMANDS[2])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    🧍 /body
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "palace") || MEMORY_COMMANDS[4])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    🏰 /palace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "flashcard") || MEMORY_COMMANDS[13])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    🗂️ /flashcard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "quiz") || MEMORY_COMMANDS[14])}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-full font-semibold transition-all shadow-2xs"
+                  >
+                    ❓ /quiz
+                  </button>
+                </div>
+              </div>
             )}
 
             {messages.map((message, index) => (
@@ -151,24 +275,189 @@ function Chat({ id }: { id: string }) {
         )}
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex sticky bottom-0 space-x-2 p-5 bg-indigo-600/75"
-      >
-        <Input
-          placeholder="Ask a Question..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
+      {/* Input Bar & Floating Slash Command Menu */}
+      <div className="p-4 bg-white border-t border-gray-100 relative">
+        {/* Floating Slash Autocomplete Popup */}
+        {showCommands && filteredCommands.length > 0 && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 max-w-3xl mx-auto bg-white border border-gray-200/90 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs font-bold text-gray-500">
+              <div className="flex items-center gap-1.5 text-purple-700">
+                <CommandIcon className="w-3.5 h-3.5" />
+                <span>Memory Techniques & Frameworks</span>
+              </div>
+              <Link
+                href="/dashboard/docs"
+                target="_blank"
+                className="text-purple-600 hover:underline flex items-center gap-0.5 text-[11px]"
+              >
+                <span>View Full Docs</span>
+                <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
 
-        <Button type="submit" disabled={!input || isPending}>
-          {isPending ? (
-            <Loader2Icon className="animate-spin text-indigo-600" />
-          ) : (
-            "Ask"
-          )}
-        </Button>
-      </form>
+            <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 p-1">
+              {filteredCommands.map((cmd, idx) => {
+                const IconComponent = iconMap[cmd.iconName] || BookOpen;
+                const isSelected = idx === selectedIndex;
+                return (
+                  <button
+                    key={cmd.id}
+                    type="button"
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    onClick={() => selectCommand(cmd)}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-colors ${
+                      isSelected
+                        ? "bg-purple-600 text-white"
+                        : "hover:bg-purple-50 text-gray-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isSelected ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
+                        }`}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`font-mono font-bold text-sm ${
+                              isSelected ? "text-white" : "text-purple-700"
+                            }`}
+                          >
+                            {cmd.slash}
+                          </span>
+                          <span
+                            className={`text-xs font-medium truncate ${
+                              isSelected ? "text-purple-100" : "text-gray-900"
+                            }`}
+                          >
+                            {cmd.name}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-xs truncate ${
+                            isSelected ? "text-purple-200" : "text-gray-500"
+                          }`}
+                        >
+                          {cmd.shortDesc}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-100 text-gray-600 border border-gray-200/60"
+                      }`}
+                    >
+                      {cmd.badge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Suggestion Pills */}
+        <div className="max-w-3xl mx-auto mb-2 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs text-gray-500 scrollbar-none">
+          <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1 flex-shrink-0">
+            <Sparkles className="w-3 h-3 text-purple-600" />
+            Techniques:
+          </span>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "memory") || MEMORY_COMMANDS[0])}
+            className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 hover:text-purple-800 border border-purple-200 transition-all font-mono text-[11px] font-bold flex-shrink-0"
+          >
+            /memory
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "see") || MEMORY_COMMANDS[1])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /see
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "body") || MEMORY_COMMANDS[2])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /body
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "car") || MEMORY_COMMANDS[3])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /car
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "palace") || MEMORY_COMMANDS[4])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /palace
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "peg") || MEMORY_COMMANDS[5])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /peg
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "flashcard") || MEMORY_COMMANDS[13])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /flashcard
+          </button>
+          <button
+            type="button"
+            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "quiz") || MEMORY_COMMANDS[14])}
+            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+          >
+            /quiz
+          </button>
+          <Link
+            href="/dashboard/docs"
+            className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-all text-[11px] font-bold flex-shrink-0 flex items-center gap-1"
+          >
+            <span>📚 23 Techniques</span>
+          </Link>
+        </div>
+
+        {/* Input Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-2 max-w-3xl mx-auto bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-purple-500 focus-within:bg-white transition-all shadow-xs"
+        >
+          <Input
+            placeholder="Type / for memory frameworks (e.g. /firstprinciple, /palace, /flashcard)..."
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            className="flex-1 border-0 bg-transparent focus-visible:ring-0 text-sm placeholder-gray-400"
+          />
+
+          <Button
+            type="submit"
+            disabled={!input.trim() || isPending}
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-5 h-9 font-semibold text-sm shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {isPending ? (
+              <Loader2Icon className="animate-spin h-4 w-4 text-white" />
+            ) : (
+              <span>Send</span>
+            )}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
