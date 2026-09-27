@@ -9,16 +9,23 @@ let app: App;
 const serviceKeyPath = path.join(process.cwd(), "service_key.json");
 
 if (getApps().length === 0) {
-  if (fs.existsSync(serviceKeyPath)) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    const serviceKey = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    app = initializeApp({
+      credential: cert(serviceKey),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "neura-ai-793fb.firebasestorage.app",
+    });
+  } else if (fs.existsSync(serviceKeyPath)) {
     const serviceKey = JSON.parse(fs.readFileSync(serviceKeyPath, "utf8"));
     app = initializeApp({
       credential: cert(serviceKey),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "neura-ai-793fb.firebasestorage.app",
     });
   } else {
     // Fallback initialize with project ID to prevent missing project ID errors
     app = initializeApp({
       projectId: "neura-ai-793fb",
-      storageBucket: "neura-ai-793fb.firebasestorage.app",
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "neura-ai-793fb.firebasestorage.app",
     });
   }
 } else {
