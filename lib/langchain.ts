@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { ChatOpenAI } from "@langchain/openai";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
@@ -56,36 +58,68 @@ export async function generateDocs(docId: string) {
   const { userId } = await auth();
   const effectiveUserId = userId || "guest_user";
 
-  console.log("--- Fetching the download URL from Firebase... ---");
-  const firebaseRef = await adminDb
+  console.log("--- Fetching document data from Firestore... ---");
+  let firebaseRef = await adminDb
     .collection("users")
     .doc(effectiveUserId)
     .collection("files")
     .doc(docId)
     .get();
 
-  const downloadUrl = firebaseRef.data()?.downloadUrl;
-
-  if (!downloadUrl) {
-    throw new Error("Download URL not found");
+  if (!firebaseRef.exists) {
+    const groupQuery = await adminDb
+      .collectionGroup("files")
+      .where("__name__", "==", docId)
+      .limit(1)
+      .get();
+    if (!groupQuery.empty) {
+      firebaseRef = groupQuery.docs[0];
+    }
   }
 
-  console.log(`--- Download URL fetched successfully: ${downloadUrl} ---`);
+  const fileData = firebaseRef.data();
+  const downloadUrl = fileData?.downloadUrl;
+  const localPath = fileData?.localPath;
 
-  // Fetch the PDF from the specified URL
-  const response = await fetch(downloadUrl);
+  let dataBlob: Blob;
 
-  // Load the PDF into a PDFDocument object
-  const data = await response.blob();
+  // 1. If local file exists on disk, load instantly (under 2ms!)
+  if (localPath && fs.existsSync(localPath)) {
+    const buffer = fs.readFileSync(localPath);
+    dataBlob = new Blob([new Uint8Array(buffer)], { type: "application/pdf" });
+  } else {
+    // 2. Check public/uploads directory directly
+    const defaultLocalPath = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      effectiveUserId,
+      `${docId}.pdf`
+    );
+    if (fs.existsSync(defaultLocalPath)) {
+      const buffer = fs.readFileSync(defaultLocalPath);
+      dataBlob = new Blob([new Uint8Array(buffer)], { type: "application/pdf" });
+    } else if (downloadUrl) {
+      // 3. Fallback: remote URL
+      const fullUrl = downloadUrl.startsWith("http")
+        ? downloadUrl
+        : `http://localhost:${process.env.PORT || 3000}${downloadUrl}`;
+      const response = await fetch(fullUrl);
+      dataBlob = await response.blob();
+    } else {
+      throw new Error("Document content not found");
+    }
+  }
 
-  // Load the PDF document from the specified path
   console.log("--- Loading PDF document... ---");
-  const loader = new PDFLoader(data);
+  const loader = new PDFLoader(dataBlob);
   const docs = await loader.load();
 
-  // Split the loaded document into smaller parts for easier processing
-  console.log("--- Splitting the document into smaller parts... ---");
-  const splitter = new RecursiveCharacterTextSplitter();
+  console.log("--- Splitting document with optimized chunk size... ---");
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 1500,
+    chunkOverlap: 200,
+  });
 
   const splitDocs = await splitter.splitDocuments(docs);
   console.log(`--- Split into ${splitDocs.length} parts ---`);
@@ -98,56 +132,79 @@ async function namespaceExists(
   namespace: string
 ) {
   if (namespace === null) throw new Error("No namespace value provided.");
-  const { namespaces } = await index.describeIndexStats();
-  return namespaces?.[namespace] !== undefined;
-}
-
-export async function generateEmbeddingsInPineconeVectorStore(docId: string) {
-  const { userId } = await auth();
-  const effectiveUserId = userId || "guest_user";
-
-  let pineconeVectorStore;
-
-  // Generate embeddings (numerical representations) for the split documents
-  console.log("--- Generating embeddings... ---");
-  const embeddings = new OpenAIEmbeddings();
-
-  const index = await pineconeClient.index(indexName);
-  const namespaceAlreadyExists = await namespaceExists(index, docId);
-
-  if (namespaceAlreadyExists) {
-    console.log(
-      `--- Namespace ${docId} already exists, reusing existing embeddings... ---`
-    );
-
-    pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-      pineconeIndex: index,
-      namespace: docId,
-    });
-
-    return pineconeVectorStore;
-  } else {
-    // If the namespace does not exist, download the PDF from firestore via the stored Download URL & generate the embeddings and store them in the Pinecone vector store
-    const splitDocs = await generateDocs(docId);
-
-    console.log(
-      `--- Storing the embeddings in namespace ${docId} in the ${indexName} Pinecone vector store... ---`
-    );
-
-    pineconeVectorStore = await PineconeStore.fromDocuments(
-      splitDocs,
-      embeddings,
-      {
-        pineconeIndex: index,
-        namespace: docId,
-      }
-    );
-
-    return pineconeVectorStore;
+  try {
+    const { namespaces } = await index.describeIndexStats();
+    return namespaces?.[namespace] !== undefined;
+  } catch (err) {
+    console.warn("Could not check namespace existence:", err);
+    return false;
   }
 }
 
-const generateLangchainCompletion = async (docId: string, question: string) => {
+// In-memory concurrency lock to prevent duplicate embedding runs for the same doc
+const activeGenerations = new Map<string, Promise<any>>();
+
+export async function generateEmbeddingsInPineconeVectorStore(docId: string) {
+  if (activeGenerations.has(docId)) {
+    console.log(`--- Reusing in-flight embedding generation for ${docId}... ---`);
+    return await activeGenerations.get(docId);
+  }
+
+  const promise = (async () => {
+    let pineconeVectorStore;
+
+    console.log("--- Initializing fast OpenAI text-embedding-3-small... ---");
+    const embeddings = new OpenAIEmbeddings({
+      model: "text-embedding-3-small",
+    });
+
+    const index = await pineconeClient.index(indexName);
+    const namespaceAlreadyExists = await namespaceExists(index, docId);
+
+    if (namespaceAlreadyExists) {
+      console.log(
+        `--- Namespace ${docId} already exists, reusing existing embeddings... ---`
+      );
+
+      pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+        pineconeIndex: index,
+        namespace: docId,
+      });
+
+      return pineconeVectorStore;
+    } else {
+      const splitDocs = await generateDocs(docId);
+
+      console.log(
+        `--- Storing embeddings in namespace ${docId} in ${indexName} Pinecone index... ---`
+      );
+
+      pineconeVectorStore = await PineconeStore.fromDocuments(
+        splitDocs,
+        embeddings,
+        {
+          pineconeIndex: index,
+          namespace: docId,
+        }
+      );
+
+      return pineconeVectorStore;
+    }
+  })();
+
+  activeGenerations.set(docId, promise);
+  try {
+    return await promise;
+  } finally {
+    activeGenerations.delete(docId);
+  }
+}
+
+const generateLangchainCompletion = async (
+  docId: string,
+  question: string,
+  isTechniqueMode: boolean = false
+) => {
   let pineconeVectorStore;
 
   pineconeVectorStore = await generateEmbeddingsInPineconeVectorStore(docId);
@@ -182,32 +239,80 @@ const generateLangchainCompletion = async (docId: string, question: string) => {
     rephrasePrompt: historyAwarePrompt,
   });
 
+  const normalSystemPrompt = `You are Neura AI, an intelligent, highly accurate, and direct document intelligence assistant.
+
+CORE DIRECTIVES & EDGE-CASE PROTOCOLS:
+
+1. ABSOLUTE GROUNDING & OUT-OF-DOCUMENT HANDLING:
+   - You answer strictly and exclusively based on the provided document context:
+{context}
+   - EDGE CASE: QUESTION NOT FOUND IN THE PDF:
+     If the user asks a question, topic, or entity that is NOT present in the PDF:
+     You MUST state clearly:
+     "I cannot find any information relevant or related to that in this PDF."
+     Optionally, mention 2-3 topics that ARE present in the document.
+   - EDGE CASE: PARTIAL MATCH / INCOMPLETE INFORMATION:
+     If the document mentions part of the topic but not the specific detail requested:
+     State what the document does mention first in 1-2 concise bullet points, then explicitly add:
+     "However, I cannot find any specific information related to that in this PDF."
+   - EDGE CASE: GENERAL KNOWLEDGE QUESTIONS OUTSIDE THE PDF (e.g. weather, outside news, coding advice not in doc):
+     Do NOT answer with generic external knowledge. State:
+     "I cannot find any information relevant or related to that in this PDF. Please feel free to ask about anything covered in this document!"
+
+2. VISUALLY DIGESTIBLE HUMAN FORMATTING:
+   - Format answers using clean, organized bullet points or short numbered lists.
+   - Limit every bullet point or paragraph to a MAXIMUM of 3 to 4 lines so it is immediately scannable.
+   - Bold key terms, metrics, and takeaways.
+   - Never output unbroken walls of text.
+
+3. ZERO UNSOLICITED MNEMONICS OR FICTIONAL STORIES:
+   - In Normal Mode, do NOT use memory techniques, dating metaphors, or fictional stories. Provide direct, objective, crisp answers.
+   - Techniques are reserved EXCLUSIVELY for when the user explicitly triggers a slash command.
+
+4. MULTILINGUAL FLUENCY:
+   - If the document or query is in Chinese (Simplified or Traditional), Spanish, Japanese, French, or any other language, answer fluently in the requested language while upholding all rules.`;
+
+  const techniqueSystemPrompt = `You are Neura AI, operating in Master Cognitive Framework Mode.
+You embody the full, deep scientific mastery of the 8 foundational texts on accelerated learning, spatial memory, and neuroplasticity:
+1. "A Mind for Numbers" (Dr. Barbara Oakley) — Focused vs. diffuse oscillation, chunking, breaking the Einstellung effect, active recall.
+2. "The Memory Book" (Harry Lorayne & Jerry Lucas) — The Associative Link system, Substitute Word phonetics for complex jargon, Phonetic Major Number System (0-9 consonants: S/Z, T/D, N, M, R, L, J/Sh/Ch, K/G, F/V, P/B), pegging.
+3. "Limitless" (Jim Kwik) — The FASTER accelerated learning protocol (Forget, Act, State, Teach, Enter, Review), visual active recall.
+4. "Make It Stick" (Brown, Roediger, McDaniel) — Desirable difficulties, spaced retrieval practice, interleaving varied problem types, generative learning, reflection.
+5. "Moonwalking with Einstein" (Joshua Foer) — Classical Roman architectural Memory Palaces (Method of Loci), Person-Action-Object (PAO) compression, bizarre & emotionally vivid imagery.
+6. "The Art of Memory" (Frances A. Yates) — Ad Herennium architectural rules (distinct lighting, 30-ft spacing, ordered architectural paths), Cicero oratorical loci, Bruno's combinatorial memory wheels.
+7. "Unlimited Memory" (Kevin Horsley) — S.E.E. Principle (Sensory, Exaggeration, Energized action), 20-station Car Journey, 10-point Body pegging list.
+8. "Boost Your Brain" (Dr. Majid Fotuhi) — Neurogenesis, hippocampal growth, BDNF upregulation, cognitive reserve, memory consolidation during sleep.
+
+CRITICAL TECHNIQUE EXECUTION RULES:
+1. NEVER EXPLAIN THE TECHNIQUE OR WRITE META-LABELS:
+   - Never say what the technique is, why you are using it, or write textbook headers (e.g. NEVER write "Step 1: S (Sensory Anchor)", "Visual Key", or "Here is the S.E.E. principle").
+   - Simply and seamlessly APPLY the technique to the facts in the document.
+
+2. REAL-WORLD HUMAN EXPERIENCES (ZERO SCI-FI / ROBOTIC TROPES):
+   - Anchor the memory in relatable everyday human experiences (spilled coffee on white sneakers, party encounters, awkward elevator rides, everyday dilemmas).
+   - Absolutely NO "blue orbs", "glowing circuits", or robotic characters.
+
+3. EDGE CASE: TECHNIQUE REQUEST ON OUT-OF-DOCUMENT TOPIC:
+   - If the user uses a command on a topic that is NOT in the document:
+     State: "I cannot find any information relevant or related to that in this PDF to apply this technique to."
+     List 2-3 key topics from the document that they can explore with this technique instead.
+
+4. DIGESTIBLE & SHORT:
+   - Keep paragraphs and points short (maximum 3 to 4 lines each).
+   - End with a quick question to anchor the concept in the user's memory.
+
+5. DOCUMENT GROUNDING:
+   - Base all encoded facts directly on the provided document context:
+{context}`;
+
+  const selectedSystemPrompt = isTechniqueMode ? techniqueSystemPrompt : normalSystemPrompt;
+
   // Define a prompt template for answering questions based on retrieved context
   console.log("--- Defining a prompt template for answering questions... ---");
   const historyAwareRetrievalPrompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      `You are Neura AI, an elite cognitive document intelligence engine and master memory architect.
-You possess deep operational mastery of the 8 foundational scientific texts on accelerated learning, spatial memory, and neuroplasticity:
-1. "A Mind for Numbers" (Dr. Barbara Oakley) — Focused vs. diffuse oscillation, chunking, overcoming the Einstellung effect, active recall.
-2. "The Memory Book" (Harry Lorayne & Jerry Lucas) — The Associative Link method, the Substitute Word system for technical jargon, the Phonetic Major Number System (0-9 consonants), and peg words.
-3. "Limitless" (Jim Kwik) — The FASTER learning protocol, visual active recall, overcoming mental barriers, and high-retention encoding.
-4. "Make It Stick: The Science of Successful Learning" (Brown, Roediger, McDaniel) — Spaced retrieval practice, interleaving, generative learning, desirable difficulties, calibration, and reflection.
-5. "Moonwalking with Einstein" (Joshua Foer) — Classical Roman architectural Memory Palaces, PAO (Person-Action-Object), vivid elaboration, and spatial navigational recall.
-6. "The Art of Memory" (Frances A. Yates) — Ad Herennium classical loci techniques, Cicero and Quintilian oratory methods, and Giordano Bruno's symbolic memory wheels.
-7. "Unlimited Memory" (Kevin Horsley) — S.E.E. Principle (Sensory, Exaggeration, Energized action), the 20-station Car Journey method, and the 10-point Body pegging system.
-8. "Boost Your Brain" (Dr. Majid Fotuhi) — Neuroplasticity, hippocampal neurogenesis, BDNF activation, and cognitive reserve engineering.
-
-CORE DIRECTIVES:
-- Base all factual answers directly and thoroughly on the document context provided below:
-{context}
-
-- If the user uses a memory technique, slash command, or asks how to learn/remember/summarize/break down the document:
-  1. Faithfully implement the requested cognitive framework.
-  2. Ground it in the actual facts, figures, steps, or principles found in the document.
-  3. Include 10 to 20+ rich, sensory, concrete examples, loci anchors, or mnemonic associations to make the concepts stick forever.
-  4. Use clear headings, bullet points, numbered steps, and memory hooks.
-- If the document context does not fully answer a question, use your cognitive expertise to provide the best structured learning path while clearly noting what is directly in the document.`,
+      selectedSystemPrompt,
     ],
 
     ...chatHistory, // Insert the actual chat history here

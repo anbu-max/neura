@@ -1,50 +1,42 @@
 "use server";
 
-import { adminDb, adminStorage } from "@/firebaseAdmin";
+import { adminDb } from "@/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
+import fs from "fs";
+import path from "path";
 
 export async function uploadFileServerFallback(formData: FormData) {
   try {
     const file = formData.get("file") as File;
     const fileId = formData.get("fileId") as string;
     const { userId } = await auth();
-    const effectiveUserId = userId || (formData.get("userId") as string) || "guest_user";
+    const effectiveUserId =
+      userId || (formData.get("userId") as string) || "guest_user";
 
     if (!file || !fileId) {
       return { success: false, error: "File and fileId are required" };
     }
 
-    const bucketName =
-      process.env.FIREBASE_STORAGE_BUCKET || "neura-ai-793fb.firebasestorage.app";
-    const bucket = adminStorage.bucket(bucketName);
-
-    const filePath = `users/${effectiveUserId}/files/${fileId}`;
-    const fileRef = bucket.file(filePath);
-
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Save to Firebase Storage using Admin SDK
-    await fileRef.save(buffer, {
-      metadata: {
-        contentType: file.type || "application/pdf",
-      },
-    });
-
-    // Make public or get signed URL
-    let downloadUrl: string;
-    try {
-      await fileRef.makePublic();
-      downloadUrl = `https://storage.googleapis.com/${bucketName}/${filePath}`;
-    } catch {
-      const [signedUrl] = await fileRef.getSignedUrl({
-        action: "read",
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 365, // 1 year
-      });
-      downloadUrl = signedUrl;
+    // 1. Immediately save file to server storage (public/uploads) for instant access
+    const userUploadsDir = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      effectiveUserId
+    );
+    if (!fs.existsSync(userUploadsDir)) {
+      fs.mkdirSync(userUploadsDir, { recursive: true });
     }
 
-    // Save metadata to Firestore
+    const localFilePath = path.join(userUploadsDir, `${fileId}.pdf`);
+    fs.writeFileSync(localFilePath, new Uint8Array(buffer));
+
+    const downloadUrl = `/api/files/${fileId}`;
+
+    // 3. Save metadata to Firestore
     await adminDb
       .collection("users")
       .doc(effectiveUserId)
@@ -53,15 +45,16 @@ export async function uploadFileServerFallback(formData: FormData) {
       .set({
         name: file.name,
         size: file.size,
-        type: file.type,
+        type: file.type || "application/pdf",
         downloadUrl,
-        ref: filePath,
+        ref: `users/${effectiveUserId}/files/${fileId}`,
+        localPath: localFilePath,
         createdAt: new Date(),
       });
 
     return { success: true, downloadUrl };
   } catch (error: any) {
-    console.error("Server upload fallback failed:", error);
-    return { success: false, error: error?.message || "Server upload failed" };
+    console.error("Upload failed:", error);
+    return { success: false, error: error?.message || "Upload failed" };
   }
 }

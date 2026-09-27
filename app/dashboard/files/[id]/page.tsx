@@ -1,5 +1,4 @@
-import Chat from "@/components/Chat";
-import PdfView from "@/components/PdfView";
+import ResizableDocumentSplit from "@/components/ResizableDocumentSplit";
 import { adminDb } from "@/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
 
@@ -11,31 +10,36 @@ async function ChatToFilePage({
   };
 }) {
   const { userId } = await auth();
-  const effectiveUserId = userId || "guest";
+  const effectiveUserId = userId || "guest_user";
 
-  const ref = await adminDb
-    .collection("users")
-    .doc(effectiveUserId)
-    .collection("files")
-    .doc(id)
-    .get();
+  let url = `/api/files/${id}`;
 
-  const url = ref.data()?.downloadUrl;
+  try {
+    const ref = await adminDb
+      .collection("users")
+      .doc(effectiveUserId)
+      .collection("files")
+      .doc(id)
+      .get();
 
-  return (
-    <div className="grid lg:grid-cols-5 h-full overflow-hidden">
-      {/* Right */}
-      <div className="col-span-5 lg:col-span-2 overflow-y-auto">
-        {/* Chat */}
-        <Chat id={id} />
-      </div>
+    if (ref.exists && ref.data()?.downloadUrl) {
+      url = ref.data()?.downloadUrl;
+    } else {
+      // Check guest_user in case user uploaded before signing in
+      const guestRef = await adminDb
+        .collection("users")
+        .doc("guest_user")
+        .collection("files")
+        .doc(id)
+        .get();
+      if (guestRef.exists && guestRef.data()?.downloadUrl) {
+        url = guestRef.data()?.downloadUrl;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not query Firestore for file downloadUrl:", err);
+  }
 
-      {/* Left */}
-      <div className="col-span-5 lg:col-span-3 bg-gray-100 border-r-2 lg:border-indigo-600 lg:-order-1 overflow-auto">
-        {/* PDFView */}
-        <PdfView url={url} />
-      </div>
-    </div>
-  );
+  return <ResizableDocumentSplit id={id} url={url} />;
 }
 export default ChatToFilePage;

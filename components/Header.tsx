@@ -22,7 +22,7 @@ function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E7E2D8] px-6 py-3.5 sticky top-0 z-20">
+    <header className="flex items-center justify-between bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E7E2D8] px-6 py-3.5 sticky top-0 z-20 font-futura tracking-tight">
       <div className="flex items-center gap-4">
         {/* On Landing Page: Show full Brand */}
         {!isDashboard ? (
@@ -103,16 +103,7 @@ function Header() {
         <SignedOut>
           <Button
             asChild
-            variant="ghost"
-            className="text-gray-600 hover:text-purple-600 rounded-xl text-sm"
-          >
-            <SignInButton mode="modal">
-              <span>Sign In</span>
-            </SignInButton>
-          </Button>
-          <Button
-            asChild
-            className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm px-4 h-9 text-sm font-semibold"
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm px-4 h-9 text-sm font-semibold font-futura tracking-tight"
           >
             <Link href="/dashboard">Get Started</Link>
           </Button>

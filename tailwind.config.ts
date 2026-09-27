@@ -60,11 +60,12 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        headline: ["'Plus Jakarta Sans'", "Futura", "'Space Grotesk'", "'Helvetica Neue'", "sans-serif"],
+        futura: ["Futura", "'Century Gothic'", "'Trebuchet MS'", "'Plus Jakarta Sans'", "sans-serif"],
+        headline: ["Futura", "'Plus Jakarta Sans'", "'Space Grotesk'", "sans-serif"],
         caslon: ["'Libre Caslon Text'", "'EB Garamond'", "Georgia", "serif"],
         serif: ["'Libre Caslon Text'", "'EB Garamond'", "Georgia", "serif"],
-        body: ["'Libre Caslon Text'", "Georgia", "serif"],
-        sans: ["'Plus Jakarta Sans'", "Inter", "sans-serif"],
+        body: ["Futura", "'Plus Jakarta Sans'", "Inter", "sans-serif"],
+        sans: ["Futura", "'Plus Jakarta Sans'", "Inter", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

@@ -60,10 +60,10 @@ export const MEMORY_COMMANDS: MemoryCommand[] = [
     ],
     proTip: "The stronger the emotional resonance (humor, surprise, nostalgia), the stronger the synaptic consolidation.",
     promptInstruction:
-      "AUTOBIOGRAPHICAL PERSONAL MEMORY METHOD: Connect every key concept from the document directly to relatable human life experiences, personal memories, daily routines, and emotional milestones:\n1. Core Concept\n2. Personal Life Analogy (A vivid lived experience or personal memory anchor)\n3. Step-by-Step Connection (Step 1, Step 2, Step 3)\n4. Emotional Memory Hook.",
+      "AUTOBIOGRAPHICAL MEMORY: DO NOT state what the technique is or write academic headers. Instead, immediately tell a punchy, relatable story from everyday life (spilling iced coffee on white sneakers, getting ghosted, awkward party small talk, long lines at the DMV) that mirrors the document's core thesis. Connect the document's mechanism directly to that human experience, keep it casual and Gen-Z friendly, and end with a quick question asking about their own experience with this.",
     exampleInput: "/memory",
     exampleOutputSnippet:
-      "Personal Memory Anchor: The Bouncer at Your Favorite Club\n\n• Step 1 (The Crowd): 200 people pushing to enter at once (Client API requests flooding a server).\n• Step 2 (The Velvet Rope): The bouncer only allows 5 people through per minute to prevent overcrowding (Token Bucket Rate Limiting).\n• Step 3 (HTTP 429): If you cut the line, you are told to wait 10 minutes outside (Rate limit cooldown)!\n\nMemory Hook: Whenever you encounter 429 Too Many Requests, picture that 6'4\" bouncer crossing his arms.",
+      "Think of API rate limits like the bouncer at an overcrowded club on a Friday night. 200 people are shoving each other at the velvet rope, but the bouncer only lets 5 people in every 60 seconds so nobody gets trampled inside. If you try to jump the velvet rope? He hits you with an HTTP 429: wait outside in the rain for 15 minutes.\n\nEver been stuck outside a club or waiting in an endless checkout line? That exact bottleneck feeling is token bucket rate limiting.",
   },
 
   // ==========================================
@@ -102,10 +102,10 @@ export const MEMORY_COMMANDS: MemoryCommand[] = [
     ],
     proTip: "Bizarre, impossible actions stick 5x better in memory than logical ordinary movements.",
     promptInstruction:
-      "S.E.E. PRINCIPLE: Convert the document's core concepts into high-definition mental cinema:\n1. Step 1: S (Sensory Anchor) - Sight, sound, touch, smell.\n2. Step 2: E (Exaggeration) - Scale elements to comic or monumental proportions.\n3. Step 3: E (Energized Action) - Animate objects with kinetic velocity.\nShow the exact encoded concept and its visual key.",
+      "DO NOT EXPLAIN WHAT S.E.E. STANDS FOR AND DO NOT WRITE 'STEP 1: SENSORY' OR 'VISUAL KEY' LABELS. Instead, directly USE the technique: paint a vivid, funny, high-energy mental movie using real-world objects and relatable human situations (e.g. walking up to a stranger in a coffee shop screaming 'marry me', getting left on read, burning your tongue on hot pizza). NO sci-fi tropes (no 'blue orbs' or 'robotic circuits'). Make it short, witty, punchy, memorable, and connect it directly to the document's lessons. End with a quick relatable question.",
     exampleInput: "/see",
     exampleOutputSnippet:
-      "• Step 1: S (Sensory): Golden guitar dials hum with crackling blue electricity and smell of sharp ozone.\n• Step 2: E (Exaggerated): Each dial is 100 feet tall, with glowing numeric gears spinning at supersonic speed.\n• Step 3: E (Energized Action): A tidal wave of glowing purple error sparks rushes backward through the neural layers, violently snapping the giant dials into the millimeter position!",
+      "Imagine walking into a bustling coffee shop, locking eyes with a total stranger, and immediately yelling, 'HIRE ME AND PAY MY HEALTH INSURANCE!' They spill their hot caramel macchiato in horror and sprint out the fire exit. That's the 1% cold pitch.\n\nNow imagine casually sliding into the booth next to them, saying, 'Hey, those vintage Sambas are clean—you got them downtown?', and just chilling. They relax, laugh, and 5 minutes later they're asking what you do for a living. That's how 40-60% reply rates actually happen.",
   },
 
   // ==========================================
@@ -1017,10 +1017,17 @@ export function detectAndInjectMemoryPrompt(userQuestion: string): {
   for (const cmd of MEMORY_COMMANDS) {
     if (cmd.slash === firstWord || cmd.aliases.includes(firstWord)) {
       const remainingQuestion = words.slice(1).join(" ").trim();
-      const promptToUse =
-        remainingQuestion || `Analyze the document using ${cmd.name}.`;
+      const topic = remainingQuestion || "the core concepts in this document";
 
-      const augmentedQuestion = `${cmd.promptInstruction}\n\nUser Topic: ${promptToUse}`;
+      const augmentedQuestion = `TOPIC: ${topic}
+DIRECTIVE: Apply the essence of ${cmd.name} to the document.
+CRITICAL RULES:
+1. NEVER explain what this technique is, why you are using it, or how it works.
+2. DO NOT include meta-labels like "Step 1", "Concept", "Visual Key", or the name of the method.
+3. Deliver the insights through a vivid, punchy, real-world human story or relatable everyday situation (awkward party encounters, coffee shop moments, getting ghosted, everyday dilemmas). Zero sci-fi or robotic tropes.
+4. Keep the tone casual, witty, sharp, and concise (Gen-Z friendly).
+5. End with a quick, thought-provoking question that connects the lesson to the user's own life experience.`;
+
       return {
         processedQuestion: augmentedQuestion,
         detectedCommand: cmd,

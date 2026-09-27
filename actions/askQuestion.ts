@@ -59,11 +59,15 @@ export async function askQuestion(id: string, question: string) {
 
   await chatRef.add(userMessage);
 
-  //   Process Memory Slash Commands (e.g. /firstprinciple, /palace, /flashcard, /quiz, /cinematic)
-  const { processedQuestion } = detectAndInjectMemoryPrompt(question);
+  // Process Memory Slash Commands (e.g. /see, /palace, /flashcard, /quiz, etc.)
+  const { processedQuestion, detectedCommand } = detectAndInjectMemoryPrompt(question);
 
-  //   Generate AI Response with Memory Framework
-  const reply = await generateLangchainCompletion(id, processedQuestion);
+  // Generate AI Response: ONLY use technique mode if a command was explicitly invoked
+  const reply = await generateLangchainCompletion(
+    id,
+    processedQuestion,
+    !!detectedCommand
+  );
 
   const aiMessage: Message = {
     role: "ai",

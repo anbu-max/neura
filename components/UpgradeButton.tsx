@@ -31,7 +31,7 @@ function UpgradeButton({ compact = false }: { compact?: boolean }) {
       >
         <Link href="/dashboard/upgrade">
           <Sparkles className="w-4 h-4 fill-white text-white" />
-          {!compact && <span>Plus upgrade</span>}
+          {!compact && <span>Upgrade to Pro</span>}
         </Link>
       </Button>
     );

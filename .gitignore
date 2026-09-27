@@ -37,3 +37,8 @@ next-env.d.ts
 
 service_key.json
 *firebase-adminsdk*.json
+
+# uploads
+/public/uploads
+/uploads
+
