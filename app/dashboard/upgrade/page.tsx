@@ -10,6 +10,8 @@ import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { useToast } from "@/components/ui/use-toast";
+
 export type UserDetails = {
   email: string;
   name: string;
@@ -18,6 +20,7 @@ export type UserDetails = {
 function PricingPage() {
   const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
   const { hasActiveMembership, loading } = useSubscription();
   const [isPending, startTransition] = useTransition();
 
@@ -30,19 +33,28 @@ function PricingPage() {
     };
 
     startTransition(async () => {
-      const stripe = await getStripe();
+      try {
+        const stripe = await getStripe();
 
-      if (hasActiveMembership) {
-        // create stripe portal...
-        const stripePortalUrl = await createStripePortal();
-        return router.push(stripePortalUrl);
+        if (hasActiveMembership) {
+          // create stripe portal...
+          const stripePortalUrl = await createStripePortal();
+          return router.push(stripePortalUrl);
+        }
+
+        const sessionId = await createCheckoutSession(userDetails);
+
+        await stripe?.redirectToCheckout({
+          sessionId,
+        });
+      } catch (err: any) {
+        toast({
+          variant: "destructive",
+          title: "Payments Disabled",
+          description:
+            err?.message || "Stripe payments are not configured in local development mode.",
+        });
       }
-
-      const sessionId = await createCheckoutSession(userDetails);
-
-      await stripe?.redirectToCheckout({
-        sessionId,
-      });
     });
   };
 

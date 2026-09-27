@@ -13,6 +13,10 @@ export async function createCheckoutSession(userDetails: UserDetails) {
     throw new Error("User not found");
   }
 
+  if (!process.env.STRIPE_API_KEY || process.env.STRIPE_API_KEY.includes("dummy")) {
+    throw new Error("Stripe checkout is not configured in local development mode.");
+  }
+
   //   first check if the user already has a stripeCustomerId
   let stripeCustomerId;
 

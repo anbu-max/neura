@@ -36,8 +36,13 @@ export async function askQuestion(id: string, question: string) {
     console.warn("Could not check membership", err);
   }
 
-  //   check if user is on FREE plan and has asked more than the FREE number of questions
-  if (!hasActiveMembership) {
+  // check if Stripe is active; if not set up, grant unlimited access for testing
+  const isStripeConfigured = Boolean(
+    process.env.STRIPE_API_KEY && !process.env.STRIPE_API_KEY.includes("dummy")
+  );
+
+  // check if user is on FREE plan and has asked more than the FREE number of questions
+  if (isStripeConfigured && !hasActiveMembership) {
     if (userMessages.length >= FREE_LIMIT) {
       return {
         success: false,

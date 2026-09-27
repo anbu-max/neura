@@ -41,6 +41,17 @@ function useSubscription() {
   useEffect(() => {
     if (!filesSnapshot || hasActiveMembership === null) return;
 
+    const isStripeConfigured = Boolean(
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY &&
+      !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.includes("dummy")
+    );
+
+    // If Stripe is not active, allow unlimited local testing uploads
+    if (!isStripeConfigured) {
+      setIsOverFileLimit(false);
+      return;
+    }
+
     const files = filesSnapshot.docs;
     const usersLimit = hasActiveMembership ? PRO_LIMIT : FREE_LIMIT;
 

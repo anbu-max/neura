@@ -1,11 +1,17 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
 
-// myapp.com/dashboard/*
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  // If Clerk keys are missing or not yet set up in Vercel env, pass through gracefully
+  if (
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    !process.env.CLERK_SECRET_KEY
+  ) {
+    return NextResponse.next();
+  }
 
-export default clerkMiddleware((auth, req) => {
-  // Allow all users (guests and signed-in) to chat and browse without forced sign-in
-});
+  return clerkMiddleware()(req, event);
+}
 
 export const config = {
   matcher: [
