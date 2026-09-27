@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Neura AI | Cognitive Document Intelligence",
+  description: "Neura AI transforms documents into living knowledge using cognitive memory techniques, loci recall, and conversational intelligence.",
+};
 
 export default function RootLayout({
   children,

@@ -50,7 +50,7 @@ export default function AppSidebar({ onToggle }: AppSidebarProps) {
             </div>
             {!collapsed && (
               <span className="font-headline font-black text-xl tracking-tight text-[#18181B] group-hover:text-purple-600 transition-colors whitespace-nowrap">
-                Chat<span className="text-purple-600">PDF</span>
+                Neura<span className="text-purple-600"> AI</span>
               </span>
             )}
           </Link>

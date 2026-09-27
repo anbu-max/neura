@@ -32,7 +32,7 @@ function Header() {
                 <Sparkles className="w-4 h-4 fill-white" />
               </div>
               <span className="font-headline font-extrabold text-xl tracking-tight text-[#18181B]">
-                Chat<span className="text-purple-600">PDF</span>
+                Neura<span className="text-purple-600"> AI</span>
               </span>
             </Link>
 

@@ -75,7 +75,7 @@ export default function Home() {
     },
     {
       q: "Does it support multiple languages?",
-      a: "ChatPDF accepts documents in any language and can answer questions or translate content across over 100+ languages simultaneously.",
+      a: "Neura AI accepts documents in any language and can answer questions or translate content across over 100+ languages simultaneously.",
     },
   ];
 
@@ -373,15 +373,15 @@ export default function Home() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 3: "CHATPDF IN A NUTSHELL" - 6 FEATURE CARDS                      */}
+        {/* SECTION 3: "NEURA AI IN A NUTSHELL" - 6 FEATURE CARDS                     */}
         {/* ========================================================================= */}
         <section className="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <h2 className="text-3xl sm:text-4xl font-headline font-black text-[#18181B]">
-              ChatPDF in a <span className="font-caslon italic font-normal text-purple-600">Nutshell</span>
+              Neura AI in a <span className="font-caslon italic font-normal text-purple-600">Nutshell</span>
             </h2>
             <p className="mt-3 text-base sm:text-lg text-[#57534E] font-caslon">
-              Your PDF AI - specialized for academic research, learning, and document synthesis.
+              Your Cognitive Document AI - specialized for research, learning, and synthesis.
             </p>
           </div>
 
@@ -649,7 +649,7 @@ export default function Home() {
                 Frequently Asked Questions
               </h2>
               <p className="mt-3 text-[#57534E] font-caslon text-base">
-                Everything you need to know about ChatPDF, privacy, and memory tools.
+                Everything you need to know about Neura AI, privacy, and memory tools.
               </p>
             </div>
 
@@ -789,7 +789,7 @@ export default function Home() {
             </div>
 
             <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#78716C] font-caslon gap-4">
-              <p>© 2026 ChatPDF AI SaaS. Built with cognitive memory principles.</p>
+              <p>© 2026 Neura AI. Built with cognitive memory principles.</p>
               <div className="flex items-center gap-6 font-headline font-semibold">
                 <Link href="#" className="hover:text-[#18181B] transition-colors">
                   Privacy Policy
