@@ -23,11 +23,25 @@ import {
   SplitSquareVertical,
   Rocket,
   ShieldCheck,
+  FileText,
+  X,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
-  const { progress, status, fileId, handleUpload } = useUpload();
+  const {
+    progress,
+    status,
+    fileId,
+    fileName,
+    fileSize,
+    error,
+    isUploading,
+    handleUpload,
+    cancelUpload,
+  } = useUpload();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
@@ -53,8 +67,6 @@ export default function Home() {
       "application/pdf": [".pdf"],
     },
   });
-
-  const isUploading = progress !== null && progress >= 0 && progress <= 100;
 
   const faqs = [
     {
@@ -196,12 +208,96 @@ export default function Home() {
                 >
                   <input {...getInputProps()} />
 
-                  {isUploading ? (
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Rocket className="w-9 h-9 text-purple-600 animate-bounce" />
-                      <span className="text-sm font-semibold text-purple-700 font-headline">
-                        {status ? String(status) : `Processing... ${progress}%`}
-                      </span>
+                  {error ? (
+                    <div
+                      className="flex flex-col items-center justify-center gap-3 p-4 text-center max-w-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <AlertCircle className="w-9 h-9 text-red-500" />
+                      <div className="space-y-1">
+                        <p className="font-headline font-bold text-sm text-red-700">Upload Encountered an Issue</p>
+                        <p className="text-xs text-red-600 font-caslon">{error}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelUpload();
+                        }}
+                        className="mt-1 px-4 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 text-xs font-headline font-bold transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : isUploading ? (
+                    <div
+                      className="w-full max-w-lg p-2 sm:p-4 flex flex-col items-center gap-3 cursor-default"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Top: File info & Cancel button */}
+                      <div className="w-full flex items-center justify-between gap-3 bg-white/90 border border-purple-100 rounded-2xl px-4 py-2.5 shadow-2xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className="text-xs font-headline font-bold text-[#18181B] truncate max-w-[180px] sm:max-w-[260px]">
+                              {fileName || "Document.pdf"}
+                            </p>
+                            <p className="text-[11px] text-[#78716C] font-mono">
+                              {fileSize || "PDF file"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Cancel Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelUpload();
+                          }}
+                          className="flex items-center gap-1 text-xs font-headline font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-2.5 py-1.5 rounded-xl transition-all shadow-2xs flex-shrink-0"
+                          title="Cancel upload"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Cancel</span>
+                        </button>
+                      </div>
+
+                      {/* Status & Percentage */}
+                      <div className="w-full flex items-center justify-between text-xs px-1 font-headline">
+                        <span className="font-semibold text-purple-800 flex items-center gap-1.5 truncate">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 flex-shrink-0" />
+                          <span className="truncate">{status || "Uploading..."}</span>
+                        </span>
+                        <span className="font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md text-[11px] flex-shrink-0 ml-2">
+                          {progress || 0}%
+                        </span>
+                      </div>
+
+                      {/* Animated Progress Bar */}
+                      <div className="w-full bg-purple-100 rounded-full h-3 overflow-hidden shadow-inner p-0.5">
+                        <div
+                          className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-500 h-full rounded-full transition-all duration-300 shadow-xs relative overflow-hidden"
+                          style={{
+                            width: `${Math.min(100, Math.max(5, progress || 0))}%`,
+                          }}
+                        />
+                      </div>
+
+                      {/* Phase Indicators */}
+                      <div className="w-full grid grid-cols-3 gap-1 pt-1 text-[10px] text-center font-headline font-semibold text-[#78716C]">
+                        <span className={`${(progress || 0) >= 20 ? "text-purple-700 font-bold" : ""}`}>
+                          1. Uploading
+                        </span>
+                        <span className={`${(progress || 0) >= 65 ? "text-purple-700 font-bold" : ""}`}>
+                          2. Database
+                        </span>
+                        <span className={`${(progress || 0) >= 85 ? "text-purple-700 font-bold" : ""}`}>
+                          3. AI Memory
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
