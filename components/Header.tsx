@@ -39,26 +39,41 @@ function Header() {
 
             <nav className="hidden md:flex items-center gap-1 text-xs font-headline font-semibold text-[#57534E] ml-4">
               <Link
-                href="/"
+                href="/#hero"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-[#EFE9DD] transition-colors"
               >
                 <Home className="w-4 h-4" />
                 <span>Home</span>
               </Link>
               <Link
+                href="/#demo"
+                className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-purple-50/50 transition-colors"
+              >
+                Live Demo
+              </Link>
+              <Link
+                href="/#features"
+                className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-purple-50/50 transition-colors"
+              >
+                Features
+              </Link>
+              <Link
                 href="/dashboard"
+                prefetch={true}
                 className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-purple-50/50 transition-colors"
               >
                 Chats & History
               </Link>
               <Link
                 href="/dashboard/docs"
+                prefetch={true}
                 className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-purple-50/50 transition-colors"
               >
                 Documentation
               </Link>
               <Link
                 href="/dashboard/upgrade"
+                prefetch={true}
                 className="px-3 py-1.5 rounded-lg hover:text-purple-600 hover:bg-purple-50/50 transition-colors"
               >
                 Pricing
@@ -88,7 +103,7 @@ function Header() {
             variant="outline"
             className="hidden sm:flex border-purple-200 text-purple-700 hover:bg-purple-50 rounded-xl h-9 px-3 gap-1.5 font-medium text-sm"
           >
-            <Link href="/dashboard/upload">
+            <Link href="/dashboard/upload" prefetch={true}>
               <FilePlus2 className="w-4 h-4 text-purple-600" />
               <span>New PDF</span>
             </Link>
@@ -106,7 +121,7 @@ function Header() {
             asChild
             className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm px-4 h-9 text-sm font-semibold font-futura tracking-tight"
           >
-            <Link href="/dashboard">Get Started</Link>
+            <Link href="/dashboard" prefetch={true}>Get Started</Link>
           </Button>
         </SignedOut>
       </div>

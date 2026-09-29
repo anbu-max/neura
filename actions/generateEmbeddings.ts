@@ -1,10 +1,10 @@
 "use server";
-import { generateEmbeddingsInPineconeVectorStore } from "@/lib/langchain";
 import { revalidatePath } from "next/cache";
 
 export async function generateEmbeddings(docId: string) {
   try {
-    // Allow both guest users and signed-in users
+    // Dynamic import prevents heavy LangChain/Pinecone/Tiktoken stack from being bundled into page routes
+    const { generateEmbeddingsInPineconeVectorStore } = await import("@/lib/langchain");
     await generateEmbeddingsInPineconeVectorStore(docId);
     revalidatePath("/dashboard");
     return { completed: true };

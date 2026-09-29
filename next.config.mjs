@@ -19,6 +19,10 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "@clerk/nextjs"],
+    serverComponentsExternalPackages: [
+      "pdf-parse",
+      "@pinecone-database/pinecone",
+    ],
   },
 };
 

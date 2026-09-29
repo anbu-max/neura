@@ -23,84 +23,45 @@ async function Documents() {
   const historyItems: HistoryItem[] = [];
 
   try {
-    // 1. Fetch from active user's documents
-    const userDocRef = adminDb.collection("users").doc(effectiveUserId);
-    const documentsSnapshot = await userDocRef.collection("files").get();
-    for (const doc of documentsSnapshot.docs) {
-      docMap.set(doc.id, { id: doc.id, ...doc.data() });
-    }
-
-    // 2. If signed in, also merge documents from guest_user session so users don't lose their files
+    // 1. Parallelize fetching across active user, guest_user, and legacy guest sessions
+    const userIdsToQuery = [effectiveUserId];
     if (userId && userId !== "guest_user") {
-      try {
-        const guestSnapshot = await adminDb
-          .collection("users")
-          .doc("guest_user")
-          .collection("files")
-          .get();
-        for (const doc of guestSnapshot.docs) {
+      userIdsToQuery.push("guest_user");
+    }
+    userIdsToQuery.push("guest");
+
+    // Execute all file queries concurrently for maximum speed
+    const snapshots = await Promise.all(
+      userIdsToQuery.map((uid) =>
+        adminDb.collection("users").doc(uid).collection("files").get().catch(() => null)
+      )
+    );
+
+    for (const snap of snapshots) {
+      if (snap && snap.docs) {
+        for (const doc of snap.docs) {
           if (!docMap.has(doc.id)) {
             docMap.set(doc.id, { id: doc.id, ...doc.data() });
           }
         }
-      } catch (e) {
-        // ignore guest fetch error
       }
     }
 
-    // 3. Fallback: also check legacy "guest" collection
-    try {
-      const legacySnapshot = await adminDb
-        .collection("users")
-        .doc("guest")
-        .collection("files")
-        .get();
-      for (const doc of legacySnapshot.docs) {
-        if (!docMap.has(doc.id)) {
-          docMap.set(doc.id, { id: doc.id, ...doc.data() });
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    // 4. Fetch chat statistics for all files in parallel for maximum speed
-    const docEntries = Array.from(docMap.entries());
-    const fileStats = await Promise.all(
-      docEntries.map(async ([id, data]) => {
-        let chatCount = 0;
-        let lastMessage = "";
-        try {
-          const ownerId = data.ref ? data.ref.split("/")[1] : effectiveUserId;
-          const chatSnap = await adminDb
-            .collection("users")
-            .doc(ownerId)
-            .collection("files")
-            .doc(id)
-            .collection("chat")
-            .get();
-
-          chatCount = chatSnap.size;
-          if (chatCount > 0) {
-            const lastDoc = chatSnap.docs[chatSnap.docs.length - 1]?.data();
-            lastMessage = lastDoc?.message || "";
-          }
-        } catch (err) {
-          // fallback
-        }
-
-        return {
-          id,
-          name: data.name || "Untitled Document",
-          downloadUrl: data.downloadUrl || `/api/files/${id}`,
-          size: data.size || 0,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-          chatCount,
-          type: "pdf" as const,
-          lastMessage,
-        };
-      })
-    );
+    // 4. Map file statistics directly from document metadata for instant sub-second rendering
+    const fileStats: HistoryItem[] = Array.from(docMap.entries()).map(([id, data]) => ({
+      id,
+      name: data.name || "Untitled Document",
+      downloadUrl: data.downloadUrl || `/api/files/${id}`,
+      size: data.size || 0,
+      createdAt: data.createdAt?.toDate
+        ? data.createdAt.toDate()
+        : data.createdAt
+        ? new Date(data.createdAt)
+        : new Date(),
+      chatCount: data.chatCount || 0,
+      type: "pdf" as const,
+      lastMessage: data.lastMessage || "",
+    }));
 
     historyItems.push(...fileStats);
 

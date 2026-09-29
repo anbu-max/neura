@@ -93,7 +93,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col font-caslon text-[#18181B] selection:bg-[#EFE9DD] selection:text-[#18181B]">
+    <div className="min-h-screen bg-[#FAF8F5] flex flex-col font-caslon text-[#18181B] selection:bg-[#EFE9DD] selection:text-[#18181B] scroll-smooth">
       {/* Top Navbar */}
       <Header />
 
@@ -101,7 +101,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 1: HERO & FOCUSED UPLOAD HUB                                      */}
         {/* ========================================================================= */}
-        <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden">
+        <section id="hero" className="scroll-mt-20 relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden">
           {/* Subtle Doodle Background Accents - Top Left */}
           <div className="absolute top-12 left-10 text-purple-300/40 hidden md:block select-none pointer-events-none -rotate-12">
             <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
@@ -410,7 +410,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 2: INTERACTIVE APP DEMO MOCKUP (CHINESE PDF + ENGLISH AI CHAT)     */}
         {/* ========================================================================= */}
-        <section className="py-14 bg-[#FAF8F5] border-t border-[#E7E2D8]">
+        <section id="demo" className="scroll-mt-16 py-14 bg-[#FAF8F5] border-t border-[#E7E2D8]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-10">
               <h2 className="text-xs font-mono font-bold text-purple-700 uppercase tracking-widest mb-2">
@@ -632,7 +632,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 3: "NEURA AI IN A NUTSHELL" - 6 FEATURE CARDS                     */}
         {/* ========================================================================= */}
-        <section className="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="features" className="scroll-mt-16 py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <h2 className="text-3xl sm:text-4xl font-headline font-black text-[#18181B]">
               Neura AI in a <span className="font-caslon italic font-normal text-purple-600">Nutshell</span>
@@ -749,7 +749,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 4: OPTIMIZED COGNITIVE LEARNING ENGINE (OBSIDIAN BLACK THEME)      */}
         {/* ========================================================================= */}
-        <section className="py-20 bg-[#09090B] text-white relative overflow-hidden border-y border-zinc-800">
+        <section id="engine" className="scroll-mt-16 py-20 bg-[#09090B] text-white relative overflow-hidden border-y border-zinc-800">
           {/* Subtle Glows */}
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -899,7 +899,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 6: INTERACTIVE FREQUENTLY ASKED QUESTIONS (FAQ)                   */}
         {/* ========================================================================= */}
-        <section className="py-20 bg-[#FAF8F5] border-t border-[#E7E2D8]">
+        <section id="faq" className="scroll-mt-16 py-20 bg-[#FAF8F5] border-t border-[#E7E2D8]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-headline font-black text-[#18181B]">

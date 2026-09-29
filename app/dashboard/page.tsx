@@ -1,9 +1,33 @@
+import { Suspense } from "react";
 import Documents from "@/components/Documents";
 import Link from "next/link";
-import { Plus, Youtube, FileText, Sparkles } from "lucide-react";
+import { Plus, Youtube, FileText, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
+
+function DocumentsLoadingSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="h-44 rounded-2xl bg-white border border-gray-100 p-5 shadow-2xs animate-pulse flex flex-col justify-between"
+        >
+          <div className="flex items-start justify-between">
+            <div className="w-10 h-10 rounded-xl bg-purple-50" />
+            <div className="w-12 h-5 rounded-md bg-gray-100" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-200 rounded w-3/4" />
+            <div className="h-3 bg-gray-100 rounded w-1/2" />
+          </div>
+          <div className="h-8 bg-gray-50 rounded-xl border border-gray-100" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function Dashboard() {
   return (
@@ -48,8 +72,10 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Documents Grid */}
-      <Documents />
+      {/* Documents Grid with Streaming Suspense */}
+      <Suspense fallback={<DocumentsLoadingSkeleton />}>
+        <Documents />
+      </Suspense>
     </div>
   );
 }
