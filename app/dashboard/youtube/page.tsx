@@ -170,23 +170,23 @@ export default function YouTubeChatPage() {
       <div className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
         <form onSubmit={handleStart} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-              <Video className="w-5 h-5 text-gray-400" />
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-stone-400">
+              <Video className="w-5 h-5 text-stone-400" />
             </div>
             <input
               type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
+              placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-gray-200 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 text-gray-800 placeholder-gray-400 transition-all disabled:opacity-60"
+              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white text-stone-900 border-2 border-stone-200 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50/70 placeholder-stone-400 font-medium transition-all disabled:opacity-60 shadow-2xs"
               required
             />
           </div>
           <Button
             type="submit"
             disabled={isLoading || !videoUrl.trim()}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl px-7 py-3.5 h-auto text-base shadow-sm hover:shadow flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+            className="bg-red-600 hover:bg-red-700 active:scale-98 text-white font-bold rounded-2xl px-8 py-3.5 h-auto text-base shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-60"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">

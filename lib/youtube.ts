@@ -130,18 +130,24 @@ export async function fetchYouTubeTranscript(
   const metadata = await getYouTubeMetadata(videoId);
 
   let rawTranscript: any[] = [];
+  // Prioritize English transcripts first
   try {
-    rawTranscript = await YoutubeTranscript.fetchTranscript(videoId);
-  } catch (primaryErr: any) {
-    console.warn("Primary transcript fetch failed, trying language fallback:", primaryErr?.message);
+    rawTranscript = await YoutubeTranscript.fetchTranscript(videoId, { lang: "en" });
+  } catch (enErr: any) {
     try {
-      rawTranscript = await YoutubeTranscript.fetchTranscript(videoId, {
-        lang: "en",
-      });
-    } catch (secondErr: any) {
-      throw new Error(
-        "Could not load transcript for this YouTube video. The video creator may have disabled subtitles or closed captions."
-      );
+      rawTranscript = await YoutubeTranscript.fetchTranscript(videoId, { lang: "en-US" });
+    } catch (usErr: any) {
+      try {
+        rawTranscript = await YoutubeTranscript.fetchTranscript(videoId, { lang: "en-GB" });
+      } catch (gbErr: any) {
+        try {
+          rawTranscript = await YoutubeTranscript.fetchTranscript(videoId);
+        } catch (anyErr: any) {
+          throw new Error(
+            "Could not load transcript for this YouTube video. The video creator may have disabled subtitles or closed captions."
+          );
+        }
+      }
     }
   }
 
@@ -152,8 +158,18 @@ export async function fetchYouTubeTranscript(
   }
 
   // Format full text with periodic timestamp markers (every ~30-45 seconds or sentence group)
+  const cleanHtml = (str: string) =>
+    (str || "")
+      .replace(/&amp;#39;|&#39;|&apos;/g, "'")
+      .replace(/&amp;quot;|&quot;/g, '"')
+      .replace(/&amp;amp;|&amp;/g, "&")
+      .replace(/&amp;lt;|&lt;/g, "<")
+      .replace(/&amp;gt;|&gt;/g, ">")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+
   const segments: TranscriptSegment[] = rawTranscript.map((item) => ({
-    text: item.text.replace(/&amp;#39;/g, "'").replace(/&quot;/g, '"'),
+    text: cleanHtml(item.text),
     offset: Math.floor(item.offset / 1000), // convert to seconds
     duration: Math.floor(item.duration / 1000),
   }));

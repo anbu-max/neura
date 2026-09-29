@@ -217,10 +217,12 @@ function Chat({ id }: { id: string }) {
                   <Sparkles className="w-6 h-6 fill-white" />
                 </div>
                 <h3 className="font-extrabold text-gray-900 text-lg">
-                  Unlimited Memory AI Assistant
+                  {id.startsWith("yt_") ? "YouTube Video AI Assistant" : "Unlimited Memory AI Assistant"}
                 </h3>
                 <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                  Ask questions, summarize chapters, or type <span className="font-mono font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">/</span> to activate cognitive study frameworks.
+                  {id.startsWith("yt_")
+                    ? "Ask questions about any timestamp, summarize, or type / to activate cognitive study frameworks."
+                    : "Ask questions, summarize chapters, or type / to activate cognitive study frameworks."}
                 </p>
                 <div className="pt-2 flex flex-wrap gap-2 justify-center">
                   <button
@@ -374,16 +376,28 @@ function Chat({ id }: { id: string }) {
           <button
             type="button"
             disabled={isPending}
-            onClick={() => triggerAction("Summarize the entire PDF, highlighting the core thesis and main takeaways.")}
+            onClick={() =>
+              triggerAction(
+                id.startsWith("yt_")
+                  ? "Summarize this YouTube video, highlighting the core thesis, speaker arguments, and key takeaways."
+                  : "Summarize the entire PDF, highlighting the core thesis and main takeaways."
+              )
+            }
             className="px-3 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
             <span>📝</span>
-            <span>Summary</span>
+            <span>{id.startsWith("yt_") ? "Video Summary" : "Summary"}</span>
           </button>
           <button
             type="button"
             disabled={isPending}
-            onClick={() => triggerAction("What are the key takeaways and main concepts of this document?")}
+            onClick={() =>
+              triggerAction(
+                id.startsWith("yt_")
+                  ? "What are the top 5 key takeaways and actionable lessons from this video?"
+                  : "What are the key takeaways and main concepts of this document?"
+              )
+            }
             className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
             <span>💡</span>
@@ -393,7 +407,26 @@ function Chat({ id }: { id: string }) {
             type="button"
             disabled={isPending}
             onClick={() => {
-              setInput("Translate the summary of this document into ");
+              setInput(
+                id.startsWith("yt_")
+                  ? "/see teach me the main lessons from this video using a vivid mental movie"
+                  : "/see teach me this concept using a vivid mental movie"
+              );
+            }}
+            className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-purple-700 hover:text-purple-800 border border-purple-200 hover:border-purple-300 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
+          >
+            <span>👁️</span>
+            <span>/see Teach Me</span>
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => {
+              setInput(
+                id.startsWith("yt_")
+                  ? "Translate the summary of this video into "
+                  : "Translate the summary of this document into "
+              );
             }}
             className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
@@ -408,7 +441,11 @@ function Chat({ id }: { id: string }) {
           className="flex items-center gap-2 max-w-3xl mx-auto bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-purple-500 focus-within:bg-white transition-all shadow-xs"
         >
           <Input
-            placeholder="Ask anything about this document, or type / for commands..."
+            placeholder={
+              id.startsWith("yt_")
+                ? "Ask anything about this video, or type / for commands..."
+                : "Ask anything about this document, or type / for commands..."
+            }
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
