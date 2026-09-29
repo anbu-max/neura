@@ -1019,6 +1019,35 @@ export function detectAndInjectMemoryPrompt(userQuestion: string): {
       const remainingQuestion = words.slice(1).join(" ").trim();
       const topic = remainingQuestion || "the core concepts in this document";
 
+      if (cmd.id === "quiz") {
+        return {
+          processedQuestion: `INTERACTIVE MULTIPLE-CHOICE QUIZ:
+TOPIC: ${topic}
+INSTRUCTIONS:
+1. You are an interactive tutor testing the user on this material.
+2. Present EXACTLY ONE question to start: **Question 1 of 3**.
+3. Create 4 clear, thoughtful multiple-choice options labeled **A)**, **B)**, **C)**, and **D)** based on key insights from the material.
+4. CRITICAL: DO NOT give away or reveal the correct answer or explanations in this message!
+5. End your question with:
+"👉 **Reply with your choice (A, B, C, or D)** to see if you got it right!"`,
+          detectedCommand: cmd,
+        };
+      }
+
+      if (cmd.id === "summary") {
+        return {
+          processedQuestion: `EXECUTIVE SUMMARY: Provide a high-density structured overview of ${topic} highlighting the core thesis, the big 3 findings, and actionable takeaways.`,
+          detectedCommand: cmd,
+        };
+      }
+
+      if (cmd.id === "flashcard") {
+        return {
+          processedQuestion: `FLASHCARD GENERATION: Create 4 high-yield active recall flashcards on ${topic}. Format each clearly with **Front (Question)** and **Back (Answer)**.`,
+          detectedCommand: cmd,
+        };
+      }
+
       const augmentedQuestion = `TOPIC: ${topic}
 DIRECTIVE: Apply the essence of ${cmd.name} to the document.
 CRITICAL RULES:

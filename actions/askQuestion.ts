@@ -112,17 +112,56 @@ export async function askQuestion(id: string, question: string) {
   // Process Memory Slash Commands (e.g. /see, /palace, /flashcard, /quiz, etc.)
   const { processedQuestion, detectedCommand } = detectAndInjectMemoryPrompt(question);
 
-  // Teaching/technique mode is activated ONLY when explicit commands or teaching terms are used
+  // Check if this is an answer to an active quiz question (e.g. user typed "A", "B", "C", "D")
+  const isShortOptionChoice =
+    /^(option\s*)?[a-d](\s*[\).:]|\b)/i.test(question.trim()) &&
+    question.trim().length <= 30;
+
+  let finalPrompt = processedQuestion;
+
+  if (isShortOptionChoice) {
+    const aiDocs = chatSnapshot.docs
+      .filter((d) => d.data().role === "ai")
+      .sort(
+        (a, b) =>
+          (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0)
+      );
+    const lastAiText = aiDocs[0]?.data()?.message || "";
+    if (
+      lastAiText.includes("Reply with your choice") ||
+      lastAiText.includes("Question 1") ||
+      lastAiText.includes("Question 2") ||
+      lastAiText.includes("Question 3")
+    ) {
+      finalPrompt = `INTERACTIVE QUIZ ANSWER EVALUATION:
+The user is answering "${question}" to the active quiz question in the conversation.
+INSTRUCTIONS:
+1. State clearly if the user is **Correct 🎉** or **Incorrect ❌**.
+2. Give a direct, punchy 2-line explanation why the correct answer is right and why the chosen option was correct or mistaken.
+3. If this was Question 1 or Question 2, immediately present the NEXT question (e.g. **Question 2 of 3** or **Question 3 of 3**) with 4 options (A, B, C, D) and end with: "👉 **Reply with your choice (A, B, C, or D)**!"
+4. If this was Question 3, give their final score, a 1-line recap, and congratulatory wrap-up!`;
+    }
+  }
+
+  // Storytelling technique mode is NOT used for quiz, executive summary, or flashcards
+  const isExcludedFromStoryMode =
+    detectedCommand?.id === "quiz" ||
+    detectedCommand?.id === "summary" ||
+    detectedCommand?.id === "flashcard" ||
+    isShortOptionChoice;
+
   const hasTeachingIntent =
     /\b(teach me|help me learn|eli5|explain like i'?m (5|a child|a beginner)|train me)\b/i.test(
       question
     );
-  const isTechniqueMode = Boolean(detectedCommand || hasTeachingIntent);
+  const isTechniqueMode = Boolean(
+    (!isExcludedFromStoryMode && detectedCommand) || hasTeachingIntent
+  );
 
   // Generate AI Response: Normal questions/summaries act normally; teaching requests use technique mode
   const reply = await generateLangchainCompletion(
     id,
-    processedQuestion,
+    finalPrompt,
     isTechniqueMode,
     userContext
   );

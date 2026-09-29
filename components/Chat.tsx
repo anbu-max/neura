@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useUser } from "@clerk/nextjs";
-import { collection, orderBy, query } from "firebase/firestore";
+import { collection, orderBy, query, doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
 import { askQuestion } from "@/actions/askQuestion";
 import ChatMessage from "./ChatMessage";
@@ -78,6 +78,33 @@ function Chat({ id }: { id: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isPending, startTransition] = useTransition();
   const bottomOfChatRef = useRef<HTMLDivElement>(null);
+
+  // Document metadata state (for personalization)
+  const [docMeta, setDocMeta] = useState<{
+    name?: string;
+    channelTitle?: string;
+    type?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    const unsub = onSnapshot(
+      doc(db, "users", effectiveUserId, "files", id),
+      (snap) => {
+        if (snap.exists()) {
+          setDocMeta(snap.data() as any);
+        }
+      },
+      (err) => {
+        console.warn("Could not fetch doc meta in Chat:", err);
+      }
+    );
+    return () => unsub();
+  }, [id, effectiveUserId]);
+
+  const isYouTube = id.startsWith("yt_") || docMeta?.type === "youtube";
+  const videoTitle = docMeta?.name || "this video";
+  const channelName = docMeta?.channelTitle || "the host/speaker";
 
   // Slash commands state
   const [showCommands, setShowCommands] = useState(false);
@@ -378,23 +405,23 @@ function Chat({ id }: { id: string }) {
             disabled={isPending}
             onClick={() =>
               triggerAction(
-                id.startsWith("yt_")
-                  ? "Summarize this YouTube video, highlighting the core thesis, speaker arguments, and key takeaways."
-                  : "Summarize the entire PDF, highlighting the core thesis and main takeaways."
+                isYouTube
+                  ? `Summarize "${videoTitle}" hosted by ${channelName}. Highlight the speaker's core thesis, key strategies, and actionable takeaways.`
+                  : "Summarize the entire document, highlighting the core thesis and main takeaways."
               )
             }
             className="px-3 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
             <span>📝</span>
-            <span>{id.startsWith("yt_") ? "Video Summary" : "Summary"}</span>
+            <span>{isYouTube ? "Video Summary" : "Summary"}</span>
           </button>
           <button
             type="button"
             disabled={isPending}
             onClick={() =>
               triggerAction(
-                id.startsWith("yt_")
-                  ? "What are the top 5 key takeaways and actionable lessons from this video?"
+                isYouTube
+                  ? `What are the top 5 key takeaways and actionable strategies from "${videoTitle}" by ${channelName}?`
                   : "What are the key takeaways and main concepts of this document?"
               )
             }
@@ -407,10 +434,25 @@ function Chat({ id }: { id: string }) {
             type="button"
             disabled={isPending}
             onClick={() => {
-              setInput(
-                id.startsWith("yt_")
-                  ? "/see teach me the main lessons from this video using a vivid mental movie"
-                  : "/see teach me this concept using a vivid mental movie"
+              triggerAction(
+                isYouTube
+                  ? `/quiz test my understanding of "${videoTitle}"`
+                  : `/quiz test my understanding of this document`
+              );
+            }}
+            className="px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
+          >
+            <span>❓</span>
+            <span>Interactive Quiz</span>
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => {
+              triggerAction(
+                isYouTube
+                  ? `/see teach me the main lessons from "${videoTitle}" using a vivid mental movie`
+                  : `/see teach me this concept using a vivid mental movie`
               );
             }}
             className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-purple-700 hover:text-purple-800 border border-purple-200 hover:border-purple-300 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
@@ -423,8 +465,8 @@ function Chat({ id }: { id: string }) {
             disabled={isPending}
             onClick={() => {
               setInput(
-                id.startsWith("yt_")
-                  ? "Translate the summary of this video into "
+                isYouTube
+                  ? `Translate the summary of "${videoTitle}" into `
                   : "Translate the summary of this document into "
               );
             }}
@@ -442,8 +484,8 @@ function Chat({ id }: { id: string }) {
         >
           <Input
             placeholder={
-              id.startsWith("yt_")
-                ? "Ask anything about this video, or type / for commands..."
+              isYouTube
+                ? `Ask anything about this video, or type / for commands...`
                 : "Ask anything about this document, or type / for commands..."
             }
             value={input}
