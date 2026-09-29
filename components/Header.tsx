@@ -16,6 +16,7 @@ function Header() {
     if (pathname === "/dashboard/upload") return "Upload PDF";
     if (pathname === "/dashboard/youtube") return "YouTube Chat";
     if (pathname === "/dashboard/docs") return "Memory Commands & Documentation";
+    if (pathname === "/dashboard/settings") return "Settings & Memory Profile";
     if (pathname === "/dashboard/upgrade") return "Upgrade to Pro";
     if (pathname.startsWith("/dashboard/files/")) return "Chat with Document";
     return "Dashboard";

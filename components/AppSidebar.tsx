@@ -12,6 +12,7 @@ import {
   PanelLeftOpen,
   Sparkles,
   History,
+  Settings,
 } from "lucide-react";
 import UpgradeButton from "./UpgradeButton";
 
@@ -140,12 +141,25 @@ export default function AppSidebar({ onToggle }: AppSidebarProps) {
           <BookOpen className="w-4 h-4 flex-shrink-0 text-amber-600" />
           {!collapsed && <span>Memory Commands</span>}
         </Link>
+
+        <Link
+          href="/dashboard/settings"
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-headline font-semibold transition-colors ${
+            pathname === "/dashboard/settings"
+              ? "bg-[#EFE9DD] text-[#18181B] font-bold border border-[#DCD5C8]"
+              : "text-[#57534E] hover:bg-[#F5F1E8] hover:text-[#18181B]"
+          } ${collapsed ? "justify-center px-0" : ""}`}
+          title="Settings & Profile"
+        >
+          <Settings className="w-4 h-4 flex-shrink-0 text-purple-600" />
+          {!collapsed && <span>Settings</span>}
+        </Link>
       </div>
 
-      {/* Footer: Upgrade */}
-      <div className="p-3 border-t border-[#E7E2D8]">
-        {!collapsed ? (
-          <div className="p-3 bg-white border border-[#E7E2D8] rounded-2xl shadow-2xs">
+      {/* Footer: Settings & Memory Profile Button */}
+      <div className="p-3 border-t border-[#E7E2D8] flex flex-col gap-2">
+        {!collapsed && (
+          <div className="p-3 bg-white border border-[#E7E2D8] rounded-2xl shadow-2xs mb-1">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-3.5 h-3.5 text-purple-600 fill-purple-600" />
               <span className="text-xs font-headline font-bold text-[#18181B]">
@@ -157,11 +171,21 @@ export default function AppSidebar({ onToggle }: AppSidebarProps) {
             </p>
             <UpgradeButton />
           </div>
-        ) : (
-          <div className="flex justify-center">
-            <UpgradeButton compact={true} />
-          </div>
         )}
+
+        {/* Bottom Settings Button (replaces standalone star icon when collapsed) */}
+        <Link
+          href="/dashboard/settings"
+          className={`flex items-center justify-center rounded-xl transition-all ${
+            collapsed
+              ? "w-10 h-10 mx-auto bg-white border border-[#E7E2D8] hover:border-purple-300 text-stone-600 hover:text-purple-600 shadow-2xs hover:shadow-xs"
+              : "w-full py-2 px-3 bg-white border border-[#E7E2D8] hover:border-purple-300 text-stone-700 hover:text-purple-700 font-headline font-semibold text-xs gap-2 shadow-2xs"
+          }`}
+          title="Settings & Memory Profile"
+        >
+          <Settings className="w-4 h-4 text-purple-600" />
+          {!collapsed && <span>Settings & Memory Profile</span>}
+        </Link>
       </div>
     </aside>
   );

@@ -90,22 +90,37 @@ export async function askQuestion(id: string, question: string) {
 
   // Retrieve user autobiographical memories or saved preferences if any
   let userMemories = "";
+  let userRegion = detectedRegion;
+
   try {
-    const memSnap = await adminDb
-      .collection("users")
-      .doc(effectiveUserId)
-      .collection("memories")
-      .limit(5)
-      .get();
+    const [memSnap, setSnap] = await Promise.all([
+      adminDb
+        .collection("users")
+        .doc(effectiveUserId)
+        .collection("memories")
+        .orderBy("createdAt", "desc")
+        .limit(25)
+        .get(),
+      adminDb
+        .collection("users")
+        .doc(effectiveUserId)
+        .collection("settings")
+        .doc("profile")
+        .get(),
+    ]);
+
     if (!memSnap.empty) {
       userMemories = memSnap.docs.map((d) => d.data().content).join("; ");
+    }
+    if (setSnap.exists && setSnap.data()?.region) {
+      userRegion = setSnap.data()?.region;
     }
   } catch (err) {
     // ignore
   }
 
   const userContext = {
-    region: detectedRegion,
+    region: userRegion,
     memories: userMemories,
   };
 
