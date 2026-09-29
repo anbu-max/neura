@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import PdfView from "./PdfView";
+import YouTubeView from "./YouTubeView";
 import Chat from "./Chat";
 import { GripVertical } from "lucide-react";
 
@@ -75,7 +76,7 @@ export default function ResizableDocumentSplit({
         <div className="absolute inset-0 z-50 cursor-col-resize bg-transparent" />
       )}
 
-      {/* Left Panel: PDF Viewer */}
+      {/* Left Panel: PDF or YouTube Viewer */}
       <div
         style={
           isDesktop
@@ -84,7 +85,12 @@ export default function ResizableDocumentSplit({
         }
         className="w-full h-1/2 lg:h-full overflow-hidden flex flex-col bg-[#F5F2EB]/40 transition-[width] duration-75"
       >
-        <PdfView url={url} />
+        {id.startsWith("yt_") ||
+        (url && (url.includes("youtube.com") || url.includes("youtu.be"))) ? (
+          <YouTubeView id={id} url={url} />
+        ) : (
+          <PdfView url={url} />
+        )}
       </div>
 
       {/* Draggable Divider Handle (Desktop) */}

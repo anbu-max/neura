@@ -157,11 +157,9 @@ function Chat({ id }: { id: string }) {
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    const q = input.trim();
-    if (!q) return;
+  const triggerAction = async (qText: string) => {
+    const q = qText.trim();
+    if (!q || isPending) return;
 
     setInput("");
     setShowCommands(false);
@@ -195,6 +193,11 @@ function Chat({ id }: { id: string }) {
         );
       }
     });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    triggerAction(input);
   };
 
   return (
@@ -362,74 +365,41 @@ function Chat({ id }: { id: string }) {
           </div>
         )}
 
-        {/* Quick Suggestion Pills */}
-        <div className="max-w-3xl mx-auto mb-2 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs text-gray-500 scrollbar-none">
+        {/* Quick Document Action Pills */}
+        <div className="max-w-3xl mx-auto mb-2 flex items-center gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
           <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1 flex-shrink-0">
-            <Sparkles className="w-3 h-3 text-purple-600" />
-            Techniques:
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            Quick Actions:
           </span>
           <button
             type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "memory") || MEMORY_COMMANDS[0])}
-            className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 hover:text-purple-800 border border-purple-200 transition-all font-mono text-[11px] font-bold flex-shrink-0"
+            disabled={isPending}
+            onClick={() => triggerAction("Summarize the entire PDF, highlighting the core thesis and main takeaways.")}
+            className="px-3 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
-            /memory
+            <span>📝</span>
+            <span>Summary</span>
           </button>
           <button
             type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "see") || MEMORY_COMMANDS[1])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+            disabled={isPending}
+            onClick={() => triggerAction("What are the key takeaways and main concepts of this document?")}
+            className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
-            /see
+            <span>💡</span>
+            <span>Key Takeaways</span>
           </button>
           <button
             type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "body") || MEMORY_COMMANDS[2])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
+            disabled={isPending}
+            onClick={() => {
+              setInput("Translate the summary of this document into ");
+            }}
+            className="px-3 py-1 rounded-full bg-white hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 transition-all text-xs font-medium flex items-center gap-1.5 shadow-2xs hover:scale-102 active:scale-98 flex-shrink-0 disabled:opacity-50"
           >
-            /body
+            <span>🌐</span>
+            <span>Translate</span>
           </button>
-          <button
-            type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "car") || MEMORY_COMMANDS[3])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
-          >
-            /car
-          </button>
-          <button
-            type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "palace") || MEMORY_COMMANDS[4])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
-          >
-            /palace
-          </button>
-          <button
-            type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "peg") || MEMORY_COMMANDS[5])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
-          >
-            /peg
-          </button>
-          <button
-            type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "flashcard") || MEMORY_COMMANDS[13])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
-          >
-            /flashcard
-          </button>
-          <button
-            type="button"
-            onClick={() => selectCommand(MEMORY_COMMANDS.find((c) => c.id === "quiz") || MEMORY_COMMANDS[14])}
-            className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 border border-gray-200/80 hover:border-purple-200 transition-all font-mono text-[11px] flex-shrink-0"
-          >
-            /quiz
-          </button>
-          <Link
-            href="/dashboard/docs"
-            className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-all text-[11px] font-bold flex-shrink-0 flex items-center gap-1"
-          >
-            <span>📚 23 Techniques</span>
-          </Link>
         </div>
 
         {/* Input Form */}
@@ -438,7 +408,7 @@ function Chat({ id }: { id: string }) {
           className="flex items-center gap-2 max-w-3xl mx-auto bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-purple-500 focus-within:bg-white transition-all shadow-xs"
         >
           <Input
-            placeholder="Type / for memory frameworks (e.g. /firstprinciple, /palace, /flashcard)..."
+            placeholder="Ask anything about this document, or type / for commands..."
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

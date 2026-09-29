@@ -13,24 +13,21 @@ function ChatMessage({ message }: { message: Message }) {
   return (
     <div className={`chat ${isHuman ? "chat-end" : "chat-start"} mb-4`}>
       <div className="chat-image avatar">
-        <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border border-gray-100 shadow-2xs">
+        <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border border-purple-100 shadow-xs bg-purple-50 ring-2 ring-purple-100/50">
           {isHuman ? (
-            user?.imageUrl ? (
-              <Image
-                src={user.imageUrl}
-                alt="Profile Picture"
-                width={36}
-                height={36}
-                className="rounded-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
-                {user?.firstName?.[0] || "U"}
-              </div>
-            )
+            <Image
+              src={user?.hasImage && user?.imageUrl ? user.imageUrl : "/user-avatar.png"}
+              alt="User Profile"
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className="h-full w-full bg-purple-600 flex items-center justify-center text-white">
-              <BotIcon className="h-5 w-5" />
+            <div className="h-full w-full bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-inner">
+              <BotIcon
+                className="h-4.5 w-4.5 text-white stroke-[2.3]"
+                style={{ shapeRendering: "geometricPrecision" }}
+              />
             </div>
           )}
         </div>
@@ -39,8 +36,8 @@ function ChatMessage({ message }: { message: Message }) {
       <div
         className={`chat-bubble text-sm leading-relaxed ${
           isHuman
-            ? "bg-purple-600 text-white rounded-2xl rounded-tr-none shadow-xs font-medium"
-            : "bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none shadow-xs border border-gray-200/60"
+            ? "bg-purple-600 text-white rounded-2xl rounded-tr-none shadow-xs font-medium px-4 py-3"
+            : "bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none shadow-xs border border-gray-200/60 px-5 py-4"
         }`}
       >
         {message.message === "Thinking..." ? (
@@ -49,7 +46,7 @@ function ChatMessage({ message }: { message: Message }) {
             <span className="text-xs text-gray-500 font-medium">Analyzing document...</span>
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2">
+          <div className="prose prose-sm max-w-none text-gray-800 space-y-3 prose-p:my-2.5 prose-p:leading-relaxed prose-ul:my-2.5 prose-li:my-1.5 prose-strong:text-gray-950 prose-headings:my-3">
             <Markdown>{message.message}</Markdown>
           </div>
         )}

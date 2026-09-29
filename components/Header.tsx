@@ -12,7 +12,7 @@ function Header() {
   const isDashboard = pathname.startsWith("/dashboard");
 
   const getPageTitle = () => {
-    if (pathname === "/dashboard") return "My Documents";
+    if (pathname === "/dashboard") return "History";
     if (pathname === "/dashboard/upload") return "Upload PDF";
     if (pathname === "/dashboard/youtube") return "YouTube Chat";
     if (pathname === "/dashboard/docs") return "Memory Commands & Documentation";

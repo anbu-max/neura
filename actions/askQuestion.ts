@@ -4,6 +4,7 @@ import { Message } from "@/components/Chat";
 import { adminDb } from "@/firebaseAdmin";
 import { generateLangchainCompletion } from "@/lib/langchain";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { detectAndInjectMemoryPrompt } from "@/lib/memoryCommands";
 // import { generateLangchainCompletion } from "@/lib/langchain";
 
@@ -59,14 +60,71 @@ export async function askQuestion(id: string, question: string) {
 
   await chatRef.add(userMessage);
 
+  // Cultural & IP/Geographic Detection
+  let detectedRegion = "Global";
+  try {
+    const reqHeaders = await headers();
+    const acceptLanguage = reqHeaders.get("accept-language") || "";
+    const ipCountry = (
+      reqHeaders.get("x-vercel-ip-country") ||
+      reqHeaders.get("cf-ipcountry") ||
+      ""
+    ).toUpperCase();
+
+    if (
+      ipCountry === "IN" ||
+      acceptLanguage.includes("en-IN") ||
+      acceptLanguage.includes("hi") ||
+      acceptLanguage.includes("ta") ||
+      acceptLanguage.includes("te")
+    ) {
+      detectedRegion = "India";
+    } else if (ipCountry === "US" || acceptLanguage.includes("en-US")) {
+      detectedRegion = "United States";
+    } else if (ipCountry === "GB" || acceptLanguage.includes("en-GB")) {
+      detectedRegion = "United Kingdom";
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  // Retrieve user autobiographical memories or saved preferences if any
+  let userMemories = "";
+  try {
+    const memSnap = await adminDb
+      .collection("users")
+      .doc(effectiveUserId)
+      .collection("memories")
+      .limit(5)
+      .get();
+    if (!memSnap.empty) {
+      userMemories = memSnap.docs.map((d) => d.data().content).join("; ");
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  const userContext = {
+    region: detectedRegion,
+    memories: userMemories,
+  };
+
   // Process Memory Slash Commands (e.g. /see, /palace, /flashcard, /quiz, etc.)
   const { processedQuestion, detectedCommand } = detectAndInjectMemoryPrompt(question);
 
-  // Generate AI Response: ONLY use technique mode if a command was explicitly invoked
+  // Teaching/technique mode is activated ONLY when explicit commands or teaching terms are used
+  const hasTeachingIntent =
+    /\b(teach me|help me learn|eli5|explain like i'?m (5|a child|a beginner)|train me)\b/i.test(
+      question
+    );
+  const isTechniqueMode = Boolean(detectedCommand || hasTeachingIntent);
+
+  // Generate AI Response: Normal questions/summaries act normally; teaching requests use technique mode
   const reply = await generateLangchainCompletion(
     id,
     processedQuestion,
-    !!detectedCommand
+    isTechniqueMode,
+    userContext
   );
 
   const aiMessage: Message = {

@@ -17,6 +17,9 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@clerk/nextjs"],
+  },
 };
 
 export default nextConfig;

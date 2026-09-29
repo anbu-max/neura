@@ -13,13 +13,13 @@ function Dashboard() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold mb-2">
             <Sparkles className="w-3.5 h-3.5 fill-purple-600 text-purple-600" />
-            <span>AI Document Workspace</span>
+            <span>Document & Chat History</span>
           </div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            My <span className="text-purple-600">Documents</span>
+            Knowledge <span className="text-purple-600">History</span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Access your uploaded PDFs, previous chats, and structured memory cards.
+            Browse and continue your uploaded PDF conversations and video chats.
           </p>
         </div>
 

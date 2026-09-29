@@ -21,7 +21,7 @@ function PlaceholderDocument() {
   return (
     <Button
       onClick={handleClick}
-      className="flex flex-col items-center justify-center w-64 h-80 rounded-2xl bg-purple-50/40 border-2 border-dashed border-purple-200 hover:border-purple-500 hover:bg-purple-50 hover:shadow-md text-purple-600 transition-all duration-200 group"
+      className="flex flex-col items-center justify-center w-full sm:w-[320px] h-[330px] rounded-3xl bg-purple-50/30 border-2 border-dashed border-purple-200 hover:border-purple-500 hover:bg-purple-50/70 hover:shadow-lg text-purple-600 transition-all duration-200 group"
     >
       {isOverFileLimit ? (
         <FrownIcon className="h-14 w-14 text-amber-500 mb-3" />

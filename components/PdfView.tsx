@@ -4,7 +4,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
 import { Document, Page, pdfjs } from "react-pdf";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Loader2Icon,
@@ -22,21 +22,110 @@ if (typeof window !== "undefined") {
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 }
 
+interface PdfPageItemProps {
+  pageNumber: number;
+  scale: number;
+  onVisible: (page: number) => void;
+}
+
+function PdfPageItem({ pageNumber, scale, onVisible }: PdfPageItemProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldRender, setShouldRender] = useState(pageNumber === 1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Observer 1: Render when within 700px of viewport for smooth scrolling
+    const renderObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldRender(true);
+        }
+      },
+      { rootMargin: "700px 0px 700px 0px" }
+    );
+    renderObserver.observe(el);
+
+    // Observer 2: Update active page counter when page is prominently in view
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onVisible(pageNumber);
+        }
+      },
+      { threshold: 0.25 }
+    );
+    visibilityObserver.observe(el);
+
+    return () => {
+      renderObserver.disconnect();
+      visibilityObserver.disconnect();
+    };
+  }, [pageNumber, onVisible]);
+
+  return (
+    <div
+      id={`pdf-page-${pageNumber}`}
+      ref={containerRef}
+      className="mb-5 transition-all flex flex-col items-center justify-center rounded-xl overflow-hidden shadow-lg bg-white border border-[#E7E2D8]/80"
+      style={{
+        minHeight: `${650 * scale}px`,
+        width: "fit-content",
+      }}
+    >
+      {shouldRender ? (
+        <Page
+          pageNumber={pageNumber}
+          scale={scale}
+          renderTextLayer={true}
+          renderAnnotationLayer={false}
+          loading={
+            <div
+              className="flex flex-col items-center justify-center text-gray-400 text-xs font-mono bg-white"
+              style={{
+                height: `${650 * scale}px`,
+                width: `${460 * scale}px`,
+              }}
+            >
+              <Loader2Icon className="animate-spin h-6 w-6 text-purple-600 mb-2" />
+              <span>Loading Page {pageNumber}...</span>
+            </div>
+          }
+        />
+      ) : (
+        <div
+          className="flex flex-col items-center justify-center text-gray-300 text-xs font-mono bg-[#FAF8F5]/50"
+          style={{
+            height: `${650 * scale}px`,
+            width: `${460 * scale}px`,
+          }}
+        >
+          <span>Page {pageNumber}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PdfView({ url }: { url: string }) {
   const [numPages, setNumPages] = useState<number>();
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [file, setFile] = useState<Blob | null>(null);
+  const [file, setFile] = useState<string | Blob | null>(url);
   const [rotation, setRotation] = useState<number>(0);
   const [scale, setScale] = useState<number>(1);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"canvas" | "native">("canvas");
   const [hasError, setHasError] = useState<boolean>(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!url) return;
+    setFile(url);
     let isMounted = true;
 
-    const fetchFile = async () => {
+    // Fallback: If URL doesn't stream directly, fetch as blob
+    const fetchFileFallback = async () => {
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to load PDF");
@@ -45,21 +134,16 @@ function PdfView({ url }: { url: string }) {
           setFile(blob);
         }
       } catch (e) {
-        console.error("Failed to fetch PDF:", e);
-        if (isMounted) {
-          setViewMode("native");
-        }
+        console.error("PDF load warning:", e);
       }
     };
 
-    fetchFile();
-
-    // Safety fallback: if Canvas doesn't render within 3.5s, switch to native viewer
+    // If canvas doesn't report load success within 4s, trigger fallback or native view
     const timer = setTimeout(() => {
       if (isMounted && !isLoaded) {
-        setViewMode("native");
+        fetchFileFallback();
       }
-    }, 3500);
+    }, 2500);
 
     return () => {
       isMounted = false;
@@ -79,6 +163,20 @@ function PdfView({ url }: { url: string }) {
     setViewMode("native");
   };
 
+  const handlePageVisible = useCallback((p: number) => {
+    setPageNumber(p);
+  }, []);
+
+  const scrollToPage = (target: number) => {
+    if (!numPages) return;
+    const clamped = Math.max(1, Math.min(numPages, target));
+    setPageNumber(clamped);
+    const targetElement = document.getElementById(`pdf-page-${clamped}`);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full bg-[#FAF8F5]">
       {/* Top Toolbar */}
@@ -92,7 +190,7 @@ function PdfView({ url }: { url: string }) {
                 size="sm"
                 className="h-8 px-2.5 text-xs rounded-lg border-[#E7E2D8] text-[#57534E] hover:text-[#18181B]"
                 disabled={pageNumber <= 1}
-                onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                onClick={() => scrollToPage(pageNumber - 1)}
               >
                 Previous
               </Button>
@@ -106,7 +204,7 @@ function PdfView({ url }: { url: string }) {
                 size="sm"
                 className="h-8 px-2.5 text-xs rounded-lg border-[#E7E2D8] text-[#57534E] hover:text-[#18181B]"
                 disabled={!numPages || pageNumber >= numPages}
-                onClick={() => setPageNumber((p) => Math.min(numPages || 1, p + 1))}
+                onClick={() => scrollToPage(pageNumber + 1)}
               >
                 Next
               </Button>
@@ -193,8 +291,11 @@ function PdfView({ url }: { url: string }) {
         </div>
       </div>
 
-      {/* Main PDF Display Area */}
-      <div className="flex-1 overflow-auto p-4 flex justify-center items-start">
+      {/* Main PDF Display Area with Smooth Continuous Scroll */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-auto p-4 flex justify-center items-start scroll-smooth"
+      >
         {viewMode === "native" ? (
           <div className="w-full h-full min-h-[calc(100vh-120px)] rounded-2xl overflow-hidden border border-[#E7E2D8] shadow-sm bg-white">
             <iframe
@@ -221,15 +322,18 @@ function PdfView({ url }: { url: string }) {
                 <p className="text-sm font-headline font-bold text-gray-700">Preparing PDF pages...</p>
               </div>
             }
-            className="flex flex-col items-center shadow-lg rounded-xl overflow-hidden bg-white"
+            className="flex flex-col items-center w-full"
           >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              className="shadow-md"
-            />
+            <div className="flex flex-col items-center w-full pb-12">
+              {Array.from(new Array(numPages || 0), (_, index) => (
+                <PdfPageItem
+                  key={`page_${index + 1}`}
+                  pageNumber={index + 1}
+                  scale={scale}
+                  onVisible={handlePageVisible}
+                />
+              ))}
+            </div>
           </Document>
         )}
       </div>

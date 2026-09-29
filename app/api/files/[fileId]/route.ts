@@ -16,10 +16,16 @@ export async function GET(
 
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
 
-    // Search for file in uploads directory (including user subdirectories)
+    // Fast check: check common locations directly before doing a recursive scan
     let targetPath: string | null = null;
+    const directGuest = path.join(uploadsDir, "guest_user", `${fileId}.pdf`);
+    const directRoot = path.join(uploadsDir, `${fileId}.pdf`);
 
-    if (fs.existsSync(uploadsDir)) {
+    if (fs.existsSync(directGuest)) {
+      targetPath = directGuest;
+    } else if (fs.existsSync(directRoot)) {
+      targetPath = directRoot;
+    } else if (fs.existsSync(uploadsDir)) {
       const searchDir = (dir: string): string | null => {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
@@ -38,11 +44,48 @@ export async function GET(
     }
 
     if (targetPath && fs.existsSync(targetPath)) {
+      const stat = fs.statSync(targetPath);
+      const fileSize = stat.size;
+      const range = request.headers.get("range");
+
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+        if (start >= fileSize || end >= fileSize) {
+          return new Response(null, {
+            status: 416,
+            headers: {
+              "Content-Range": `bytes */${fileSize}`,
+            },
+          });
+        }
+
+        const chunksize = end - start + 1;
+        const buffer = Buffer.alloc(chunksize);
+        const fd = fs.openSync(targetPath, "r");
+        fs.readSync(fd, buffer, 0, chunksize, start);
+        fs.closeSync(fd);
+
+        return new Response(new Uint8Array(buffer), {
+          status: 206,
+          headers: {
+            "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": chunksize.toString(),
+            "Content-Type": "application/pdf",
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
       const fileBuffer = fs.readFileSync(targetPath);
       return new Response(new Uint8Array(fileBuffer), {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Length": fileBuffer.length.toString(),
+          "Content-Length": fileSize.toString(),
           "Accept-Ranges": "bytes",
           "Content-Disposition": 'inline; filename="document.pdf"',
           "Cache-Control": "public, max-age=31536000, immutable",
