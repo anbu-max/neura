@@ -49,11 +49,25 @@ export async function GET(
       const range = request.headers.get("range");
 
       if (range) {
-        const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const matches = range.match(/bytes=(\d*)-(\d*)/);
+        let start = 0;
+        let end = fileSize - 1;
 
-        if (start >= fileSize || end >= fileSize) {
+        if (matches) {
+          if (matches[1] && matches[2]) {
+            start = parseInt(matches[1], 10);
+            end = parseInt(matches[2], 10);
+          } else if (matches[1]) {
+            start = parseInt(matches[1], 10);
+            end = fileSize - 1;
+          } else if (matches[2]) {
+            const suffix = parseInt(matches[2], 10);
+            start = Math.max(0, fileSize - suffix);
+            end = fileSize - 1;
+          }
+        }
+
+        if (isNaN(start) || isNaN(end) || start > end || start >= fileSize) {
           return new Response(null, {
             status: 416,
             headers: {
@@ -62,13 +76,12 @@ export async function GET(
           });
         }
 
+        end = Math.min(end, fileSize - 1);
         const chunksize = end - start + 1;
-        const buffer = Buffer.alloc(chunksize);
-        const fd = fs.openSync(targetPath, "r");
-        fs.readSync(fd, buffer, 0, chunksize, start);
-        fs.closeSync(fd);
+        const fileBuffer = fs.readFileSync(targetPath);
+        const chunkBuffer = fileBuffer.subarray(start, end + 1);
 
-        return new Response(new Uint8Array(buffer), {
+        return new Response(new Uint8Array(chunkBuffer), {
           status: 206,
           headers: {
             "Content-Range": `bytes ${start}-${end}/${fileSize}`,

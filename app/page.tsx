@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "@/components/Header";
 import CognitiveStoryShowcase from "@/components/CognitiveStoryShowcase";
 import useUpload from "@/hooks/useUpload";
@@ -101,7 +102,7 @@ export default function Home() {
         {/* SECTION 1: HERO & FOCUSED UPLOAD HUB                                      */}
         {/* ========================================================================= */}
         <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden">
-          {/* Subtle Doodle Background Accents */}
+          {/* Subtle Doodle Background Accents - Top Left */}
           <div className="absolute top-12 left-10 text-purple-300/40 hidden md:block select-none pointer-events-none -rotate-12">
             <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
               <path
@@ -121,37 +122,79 @@ export default function Home() {
             </svg>
           </div>
 
-          <div className="absolute top-20 right-14 text-purple-300/40 hidden md:block select-none pointer-events-none rotate-12">
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <circle
-                cx="40"
-                cy="40"
-                r="30"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeDasharray="8 8"
-              />
-              <path
-                d="M25 35 Q 40 50, 55 35"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </svg>
+          {/* Top Right Doodle Arrow & Badge */}
+          <div className="absolute top-16 right-8 sm:right-16 text-purple-400 hidden lg:block select-none pointer-events-none z-10">
+            <div className="flex flex-col items-center rotate-6">
+              <span className="text-[11px] font-mono font-bold tracking-wider text-purple-800 bg-purple-100/90 px-2.5 py-1 rounded-full border border-purple-200/80 shadow-2xs rotate-[-4deg]">
+                ✦ 10x Faster Retention
+              </span>
+              <svg width="65" height="55" viewBox="0 0 100 80" fill="none" className="text-purple-400 mt-1">
+                <path
+                  d="M75 10 C 60 35, 35 45, 20 70 M 20 70 L 35 65 M 20 70 L 25 55"
+                  stroke="currentColor"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Bottom Left Hand-Drawn Annotation */}
+          <div className="absolute bottom-8 left-8 sm:left-14 hidden lg:block select-none pointer-events-none z-10">
+            <div className="flex items-center gap-2 rotate-[-5deg]">
+              <svg width="45" height="35" viewBox="0 0 80 60" fill="none" className="text-purple-400">
+                <path
+                  d="M10 45 Q 40 10, 70 25"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeDasharray="4 4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M60 15 L 72 25 L 60 35"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-[#EFE9DD] px-2.5 py-1 rounded-md border border-[#DCD5C8] shadow-2xs">
+                Zero Rote Repetition
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Right Hand-Drawn Annotation */}
+          <div className="absolute bottom-10 right-8 sm:right-14 hidden lg:block select-none pointer-events-none z-10">
+            <div className="flex flex-col items-end rotate-[4deg]">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-purple-900 bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200/90 shadow-2xs">
+                Auto Multi-Lingual AI
+              </span>
+              <svg width="40" height="30" viewBox="0 0 70 50" fill="none" className="text-purple-300 mt-1">
+                <path
+                  d="M55 10 Q 30 25, 10 38"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeDasharray="3 3"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
           </div>
 
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             {/* Sparkle Headline Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EFE9DD] border border-[#DCD5C8] text-[#18181B] text-xs font-mono font-bold uppercase tracking-widest mb-6 shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EFE9DD] border border-[#DCD5C8] text-[#18181B] text-xs font-mono font-bold uppercase tracking-widest mb-6 shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>AI Tools for Students & Researchers</span>
+              <span>The Cognitive Paradigm Shift • Beyond Rote Learning</span>
             </div>
 
-            {/* Main Title with Futura Geometric Font */}
-            <h1 className="text-4xl sm:text-6xl font-headline font-black text-[#18181B] tracking-tight leading-[1.15] max-w-4xl mx-auto">
-              Transform Your PDFs into{" "}
+            {/* Main Title with Visionary Leadership Words */}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-headline font-black text-[#18181B] tracking-tight leading-[1.12] max-w-4xl mx-auto">
+              Stop Re-Reading.{" "}
               <span className="text-purple-600 relative inline-block font-caslon italic font-normal">
-                Interactive
+                Master Knowledge
                 <svg
                   className="absolute w-full h-3 -bottom-1 left-0 text-purple-400/80"
                   viewBox="0 0 100 20"
@@ -166,12 +209,12 @@ export default function Home() {
                   />
                 </svg>
               </span>{" "}
-              Conversations
+              10x Faster.
             </h1>
 
-            {/* Subtitle with Caslon Heritage Typography */}
-            <p className="mt-5 text-lg sm:text-xl text-[#57534E] max-w-2xl mx-auto font-caslon leading-relaxed">
-              Drop any <span className="text-[#18181B] font-semibold font-headline">PDF document</span>. Summarize, extract key takeaways, and memorize effortlessly with cognitive learning.
+            {/* Subtitle with Visionary Tone */}
+            <p className="mt-6 text-lg sm:text-xl text-[#57534E] max-w-2xl mx-auto font-caslon leading-relaxed">
+              Traditional studying forces passive, repetitive memorization. Neura AI transforms dense PDFs, foreign research, and technical papers into <span className="text-[#18181B] font-semibold font-headline">interactive dialogues</span>, cross-lingual translations, and permanent memory palaces.
             </p>
 
             {/* Single Clean Focused PDF Drop Card */}
@@ -365,7 +408,7 @@ export default function Home() {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 2: INTERACTIVE APP DEMO MOCKUP                                    */}
+        {/* SECTION 2: INTERACTIVE APP DEMO MOCKUP (CHINESE PDF + ENGLISH AI CHAT)     */}
         {/* ========================================================================= */}
         <section className="py-14 bg-[#FAF8F5] border-t border-[#E7E2D8]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -376,17 +419,21 @@ export default function Home() {
               <p className="text-2xl sm:text-3xl font-headline font-bold text-[#18181B]">
                 Experience Side-by-Side Clarity
               </p>
+              <p className="mt-2 text-sm text-[#57534E] font-caslon">
+                Upload research in any language. Ask questions naturally in English. Neura AI reads the original text & charts, instantly translating and synthesizing answers.
+              </p>
             </div>
 
             {/* App Mockup Container */}
             <div className="bg-white border border-[#E7E2D8] rounded-3xl p-3 sm:p-5 shadow-xs relative overflow-hidden">
+              {/* Window Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[#E7E2D8] mb-4 px-2">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-400" />
                   <div className="w-3 h-3 rounded-full bg-amber-400" />
                   <div className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="ml-3 text-xs font-mono font-medium text-[#78716C]">
-                    Unlimited_Memory_Summary.pdf
+                  <span className="ml-3 text-xs font-mono font-medium text-[#78716C] truncate max-w-[200px] sm:max-w-sm">
+                    中国企业级人工智能采用趋势白皮书(2022-2026).pdf
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-purple-700 font-headline font-semibold bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
@@ -395,70 +442,184 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[360px]">
-                {/* PDF Page Mockup */}
-                <div className="lg:col-span-7 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D8] p-6 shadow-2xs flex flex-col justify-between">
-                  <div>
-                    <div className="h-4 bg-[#E7E2D8] rounded w-2/5 mb-4" />
-                    <div className="space-y-2 mb-6">
-                      <div className="h-3 bg-[#EFE9DD] rounded w-full" />
-                      <div className="h-3 bg-[#EFE9DD] rounded w-11/12" />
-                      <div className="h-3 bg-purple-100 rounded w-4/5 text-[10px] text-purple-800 px-1 font-mono">
-                        Memory Principle: Transform abstract data into vivid physical loci.
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[460px]">
+                {/* LEFT: Authentic Chinese PDF Page Mockup with Chinese Bar Chart */}
+                <div className="lg:col-span-7 bg-[#FAF8F5] rounded-2xl border border-[#E7E2D8] p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+                  <div className="space-y-4">
+                    {/* Document Header in Chinese */}
+                    <div className="border-b border-[#E7E2D8] pb-3">
+                      <div className="inline-block px-2 py-0.5 rounded bg-stone-200/70 text-[10px] font-mono font-semibold text-stone-700 mb-1.5">
+                        国家信息通信与战略数字化研报 • 核心发布
                       </div>
-                      <div className="h-3 bg-[#EFE9DD] rounded w-5/6" />
+                      <h3 className="text-base sm:text-lg font-headline font-black text-[#18181B] leading-snug">
+                        中国企业级人工智能采用率及发展前景 (2022–2026)
+                      </h3>
                     </div>
-                    <div className="p-4 bg-white rounded-xl border border-[#E7E2D8] flex items-center gap-3">
-                      <BrainCircuit className="w-8 h-8 text-purple-600 flex-shrink-0" />
-                      <p className="text-xs text-[#18181B] font-caslon font-medium leading-relaxed">
-                        &quot;The secret to a 10x memory is not natural talent, but organizing ideas through spatial memory palaces.&quot;
-                      </p>
+
+                    {/* Chinese Paragraph 1 */}
+                    <p className="text-xs text-[#44403C] font-caslon leading-relaxed">
+                      随着大语言模型与多模态AI基础设施的爆发式发展，中国企业正加速推动人工智能在核心业务场景中的深度渗透与工程化落地。在智能制造、金融科技、智慧医疗及政务服务等关键产业，AI技术已从辅助工具演变为重塑企业竞争力的核心生产力引擎。
+                    </p>
+
+                    {/* Chinese Bar Chart Container */}
+                    <div className="bg-white rounded-xl border border-[#E7E2D8] p-4 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-[#F0ECE1] pb-2">
+                        <span className="text-xs font-headline font-bold text-[#18181B]">
+                          图表 1.2: 中国各年度企业级 AI 采用率增长趋势 (2022–2026)
+                        </span>
+                        <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                          单位: 采用率 (%)
+                        </span>
+                      </div>
+
+                      {/* Bar Chart Visualization */}
+                      <div className="pt-2 pb-1 space-y-2.5">
+                        {/* 2022 Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-stone-700 font-bold">2022年 (基础探索期)</span>
+                            <span className="text-[#18181B] font-bold">31.4%</span>
+                          </div>
+                          <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-purple-300 h-full rounded-full" style={{ width: "31.4%" }} />
+                          </div>
+                        </div>
+
+                        {/* 2023 Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-stone-700 font-bold">2023年 (大模型突破)</span>
+                            <span className="text-[#18181B] font-bold">42.1%</span>
+                          </div>
+                          <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-purple-400 h-full rounded-full" style={{ width: "42.1%" }} />
+                          </div>
+                        </div>
+
+                        {/* 2024 Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-stone-700 font-bold">2024年 (规模化部署)</span>
+                            <span className="text-[#18181B] font-bold">54.8%</span>
+                          </div>
+                          <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-purple-500 h-full rounded-full" style={{ width: "54.8%" }} />
+                          </div>
+                        </div>
+
+                        {/* 2025 Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-purple-900 font-bold">2025年预测 (深度融合期)</span>
+                            <span className="text-purple-700 font-bold">67.3%</span>
+                          </div>
+                          <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-purple-600 h-full rounded-full" style={{ width: "67.3%" }} />
+                          </div>
+                        </div>
+
+                        {/* 2026 Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono">
+                            <span className="text-purple-900 font-bold">2026年预测 (全行业赋能)</span>
+                            <span className="text-purple-800 font-bold">78.5%</span>
+                          </div>
+                          <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 h-full rounded-full" style={{ width: "78.5%" }} />
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Chinese Paragraph 2 */}
+                    <p className="text-xs text-[#44403C] font-caslon leading-relaxed">
+                      调研统计显示，2022至2026年复合增长率（CAGR）预计达25.7%。自主可控的国产AI算力基建以及多模态文档智能理解工具的成熟，成为推动中小型企业快速接入AI的核心动因。
+                    </p>
                   </div>
-                  <div className="text-[11px] text-[#78716C] font-mono text-right pt-4 border-t border-[#E7E2D8]">
-                    Page 1 of 12 • Source Verified
+
+                  {/* Document Footer */}
+                  <div className="text-[11px] text-[#78716C] font-mono text-right pt-3 border-t border-[#E7E2D8] mt-4">
+                    第 1 页 / 共 18 页 • 数据来源：中国人工智能蓝皮书 • 权威核验
                   </div>
                 </div>
 
-                {/* Chat Stream Mockup */}
+                {/* RIGHT: Live Chat Stream Mockup with User Avatar & English Auto-Translation */}
                 <div className="lg:col-span-5 bg-white rounded-2xl border border-[#E7E2D8] p-4 shadow-2xs flex flex-col justify-between space-y-4">
-                  <div className="space-y-3">
-                    {/* User message */}
-                    <div className="flex justify-end">
-                      <div className="bg-[#18181B] text-white text-xs font-headline font-medium px-3.5 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] shadow-2xs">
-                        How can I remember complex terms from this paper?
+                  <div className="space-y-4">
+                    {/* User Question with Profile Avatar */}
+                    <div className="flex items-start justify-end gap-2.5">
+                      <div className="bg-[#18181B] text-white text-xs font-headline font-medium px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] shadow-2xs leading-relaxed">
+                        What does the bar chart show about AI adoption in China between 2022 and 2026?
+                      </div>
+                      <div className="relative flex-shrink-0">
+                        <Image
+                          src="/user-profile-avatar.png"
+                          alt="User avatar"
+                          width={34}
+                          height={34}
+                          className="w-8 h-8 rounded-full object-cover border-2 border-emerald-500 shadow-2xs"
+                        />
                       </div>
                     </div>
 
-                    {/* AI Message */}
-                    <div className="flex justify-start">
-                      <div className="bg-[#F7F4EE] text-[#18181B] text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-none max-w-[90%] space-y-1.5 leading-relaxed border border-[#E7E2D8]">
-                        <p className="font-headline font-bold text-purple-700 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" /> 3 Core Memory Anchors:
+                    {/* AI Message: Auto-Translated into English */}
+                    <div className="flex items-start gap-2.5 justify-start">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0 border border-purple-200 shadow-2xs">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                      </div>
+
+                      <div className="bg-[#FAF8F5] text-[#18181B] text-xs px-4 py-3 rounded-2xl rounded-tl-none max-w-[90%] space-y-2 leading-relaxed border border-[#E7E2D8] shadow-2xs">
+                        {/* Auto-Translation Badge */}
+                        <div className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-800 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-purple-200">
+                          <Globe className="w-3 h-3 text-purple-600" />
+                          <span>Auto-translated from Chinese (Simplified)</span>
+                        </div>
+
+                        <p className="text-xs font-caslon text-[#292524]">
+                          According to <strong className="font-headline font-bold text-[#18181B]">Figure 1.2</strong> on Page 1, enterprise AI adoption in China undergoes rapid, accelerating expansion across the 5-year timeframe:
                         </p>
-                        <ol className="list-decimal pl-4 space-y-1 text-[#44403C] font-caslon">
-                          <li>
-                            <strong className="font-headline text-[#18181B]">See it:</strong> Convert abstract terms into vivid pictures.
+
+                        {/* Translated Chart Takeaways */}
+                        <ul className="space-y-1 text-[11px] font-mono text-[#44403C] bg-white p-2.5 rounded-xl border border-[#E7E2D8]">
+                          <li className="flex justify-between">
+                            <span>• 2022 (Foundational Pilot):</span>
+                            <span className="font-bold text-[#18181B]">31.4%</span>
                           </li>
-                          <li>
-                            <strong className="font-headline text-[#18181B]">Place it:</strong> Anchor terms in a familiar vehicle or room.
+                          <li className="flex justify-between">
+                            <span>• 2023 (LLM Breakthrough):</span>
+                            <span className="font-bold text-[#18181B]">42.1%</span>
                           </li>
-                          <li>
-                            <strong className="font-headline text-[#18181B]">Recall it:</strong> Test with active retrieval questions.
+                          <li className="flex justify-between">
+                            <span>• 2024 (Scale Deployment):</span>
+                            <span className="font-bold text-[#18181B]">54.8%</span>
                           </li>
-                        </ol>
+                          <li className="flex justify-between text-purple-700 font-semibold">
+                            <span>• 2025 (Projected Deep Integration):</span>
+                            <span className="font-bold">67.3%</span>
+                          </li>
+                          <li className="flex justify-between text-purple-800 font-bold">
+                            <span>• 2026 (Projected Ubiquitous Adoption):</span>
+                            <span className="font-bold">78.5%</span>
+                          </li>
+                        </ul>
+
+                        <p className="text-[11px] text-[#57534E] font-caslon">
+                          <strong className="font-headline text-[#18181B]">Key Takeaway:</strong> Adoption surges by <span className="font-semibold text-purple-700">+47.1% overall</span> at a <span className="font-semibold text-purple-700">25.7% CAGR</span>, fueled by domestic compute clusters and multimodal document AI.
+                        </p>
+
                         <div className="pt-1">
-                          <span className="inline-block bg-[#EFE9DD] text-[#18181B] font-mono font-semibold px-1.5 py-0.5 rounded text-[10px] border border-[#DCD5C8]">
-                            Source: Page 1, Section 2
+                          <span className="inline-block bg-[#EFE9DD] text-[#18181B] font-mono font-semibold px-2 py-0.5 rounded text-[10px] border border-[#DCD5C8]">
+                            Source: Page 1, 图表 1.2 (Figure 1.2)
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Input Mockup */}
                   <div className="pt-2 border-t border-[#E7E2D8]">
-                    <div className="flex items-center gap-2 bg-[#FAF8F5] rounded-xl px-3 py-2 text-xs text-[#78716C] border border-[#E7E2D8]">
-                      <span className="font-caslon">Ask any follow-up question...</span>
+                    <div className="flex items-center gap-2 bg-[#FAF8F5] rounded-xl px-3.5 py-2.5 text-xs text-[#78716C] border border-[#E7E2D8]">
+                      <span className="font-caslon">Ask anything in English about this document...</span>
                       <ArrowRight className="w-3.5 h-3.5 ml-auto text-purple-600" />
                     </div>
                   </div>
