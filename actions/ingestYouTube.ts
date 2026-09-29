@@ -55,8 +55,8 @@ export async function ingestYouTube(videoUrl: string): Promise<IngestYouTubeResu
       channelTitle: transcriptData.metadata.authorName,
       transcript: transcriptData.fullText,
       segments: transcriptData.segments.slice(0, 3000), // Covers up to 3.5 hours of video with zero truncation
-      size: transcriptData.fullText.length,
-      totalBytes: transcriptData.fullText.length,
+      size: 0,
+      totalBytes: 0,
       createdAt: new Date(),
     };
 

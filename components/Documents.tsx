@@ -47,25 +47,37 @@ async function Documents() {
       }
     }
 
-    // 4. Map file statistics directly from document metadata for instant sub-second rendering
-    const fileStats: HistoryItem[] = Array.from(docMap.entries()).map(([id, data]) => ({
-      id,
-      name: data.name || "Untitled Document",
-      downloadUrl: data.downloadUrl || `/api/files/${id}`,
-      size: data.size || 0,
-      createdAt: data.createdAt?.toDate
-        ? data.createdAt.toDate()
-        : data.createdAt
-        ? new Date(data.createdAt)
-        : new Date(),
-      chatCount: data.chatCount || 0,
-      type: "pdf" as const,
-      lastMessage: data.lastMessage || "",
-    }));
+    // 4. Map file statistics and accurately classify YouTube vs PDF documents (deduplicating by ID)
+    const itemsMap = new Map<string, HistoryItem>();
 
-    historyItems.push(...fileStats);
+    docMap.forEach((data, id) => {
+      const isYouTube =
+        data.type === "youtube" ||
+        id.startsWith("yt_") ||
+        Boolean(data.videoId) ||
+        Boolean(
+          data.downloadUrl &&
+            (data.downloadUrl.includes("youtube.com") ||
+              data.downloadUrl.includes("youtu.be"))
+        );
 
-    // 5. Fetch YouTube chats if any
+      itemsMap.set(id, {
+        id,
+        name: data.name || (isYouTube ? "YouTube Video" : "Untitled Document"),
+        downloadUrl: data.downloadUrl || (isYouTube ? "" : `/api/files/${id}`),
+        size: isYouTube ? 0 : data.size || 0,
+        createdAt: data.createdAt?.toDate
+          ? data.createdAt.toDate()
+          : data.createdAt
+          ? new Date(data.createdAt)
+          : new Date(),
+        chatCount: data.chatCount || 0,
+        type: isYouTube ? ("youtube" as const) : ("pdf" as const),
+        lastMessage: data.lastMessage || "",
+      });
+    });
+
+    // 5. Fetch YouTube chats if any, merging into itemsMap without duplicates
     try {
       const ytSnap = await adminDb
         .collection("users")
@@ -74,20 +86,34 @@ async function Documents() {
         .get();
       for (const doc of ytSnap.docs) {
         const d = doc.data();
-        historyItems.push({
-          id: doc.id,
-          name: d.title || d.url || "YouTube Chat Session",
-          downloadUrl: d.url || "",
-          size: 0,
-          createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(),
-          chatCount: d.messagesCount || 1,
-          type: "youtube",
-          lastMessage: d.lastMessage || "",
-        });
+        const existing = itemsMap.get(doc.id);
+        if (existing) {
+          // Keep single card, ensure type is strictly "youtube"
+          existing.type = "youtube";
+          if (d.title) existing.name = d.title;
+          if (d.url) existing.downloadUrl = d.url;
+        } else {
+          itemsMap.set(doc.id, {
+            id: doc.id,
+            name: d.title || d.url || "YouTube Video",
+            downloadUrl: d.url || "",
+            size: 0,
+            createdAt: d.createdAt?.toDate
+              ? d.createdAt.toDate()
+              : d.createdAt
+              ? new Date(d.createdAt)
+              : new Date(),
+            chatCount: d.messagesCount || 0,
+            type: "youtube" as const,
+            lastMessage: d.lastMessage || "",
+          });
+        }
       }
     } catch (err) {
       // ignore
     }
+
+    historyItems.push(...Array.from(itemsMap.values()));
 
     // Sort newest first
     historyItems.sort(
