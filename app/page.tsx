@@ -549,7 +549,7 @@ export default function Home() {
                     {/* User Question with Profile Avatar */}
                     <div className="flex items-start justify-end gap-2.5">
                       <div className="bg-[#18181B] text-white text-xs font-headline font-medium px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] shadow-2xs leading-relaxed">
-                        What does the bar chart show about AI adoption in China between 2022 and 2026?
+                        What is this PDF about?
                       </div>
                       <div className="relative flex-shrink-0">
                         <Image
@@ -575,41 +575,46 @@ export default function Home() {
                           <span>Auto-translated from Chinese (Simplified)</span>
                         </div>
 
-                        <p className="text-xs font-caslon text-[#292524]">
-                          According to <strong className="font-headline font-bold text-[#18181B]">Figure 1.2</strong> on Page 1, enterprise AI adoption in China undergoes rapid, accelerating expansion across the 5-year timeframe:
+                        <p className="text-xs font-caslon text-[#292524] leading-relaxed">
+                          This document is the <strong className="font-headline font-bold text-[#18181B]">Whitepaper on Enterprise AI Adoption in China (2022–2026)</strong>. It outlines how generative AI models and intelligent agents are transforming core operations across manufacturing, finance, healthcare, and governance.
                         </p>
 
-                        {/* Translated Chart Takeaways */}
-                        <ul className="space-y-1 text-[11px] font-mono text-[#44403C] bg-white p-2.5 rounded-xl border border-[#E7E2D8]">
-                          <li className="flex justify-between">
-                            <span>• 2022 (Foundational Pilot):</span>
-                            <span className="font-bold text-[#18181B]">31.4%</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>• 2023 (LLM Breakthrough):</span>
-                            <span className="font-bold text-[#18181B]">42.1%</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>• 2024 (Scale Deployment):</span>
-                            <span className="font-bold text-[#18181B]">54.8%</span>
-                          </li>
-                          <li className="flex justify-between text-purple-700 font-semibold">
-                            <span>• 2025 (Projected Deep Integration):</span>
-                            <span className="font-bold">67.3%</span>
-                          </li>
-                          <li className="flex justify-between text-purple-800 font-bold">
-                            <span>• 2026 (Projected Ubiquitous Adoption):</span>
-                            <span className="font-bold">78.5%</span>
-                          </li>
-                        </ul>
+                        {/* Translated Chart & Page Data */}
+                        <div className="bg-white p-2.5 rounded-xl border border-[#E7E2D8] space-y-1.5">
+                          <p className="text-[11px] font-headline font-bold text-purple-900">
+                            Page 1 Key Findings & Bar Chart (Figure 1.2):
+                          </p>
+                          <ul className="space-y-1 text-[11px] font-mono text-[#44403C]">
+                            <li className="flex justify-between">
+                              <span>• 2022 (Foundational Pilot):</span>
+                              <span className="font-bold text-[#18181B]">31.4%</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>• 2023 (LLM Breakthrough):</span>
+                              <span className="font-bold text-[#18181B]">42.1%</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>• 2024 (Scale Deployment):</span>
+                              <span className="font-bold text-[#18181B]">54.8%</span>
+                            </li>
+                            <li className="flex justify-between text-purple-700 font-semibold">
+                              <span>• 2025 (Projected Deep Integration):</span>
+                              <span className="font-bold">67.3%</span>
+                            </li>
+                            <li className="flex justify-between text-purple-800 font-bold">
+                              <span>• 2026 (Projected Ubiquitous Adoption):</span>
+                              <span className="font-bold">78.5%</span>
+                            </li>
+                          </ul>
+                        </div>
 
                         <p className="text-[11px] text-[#57534E] font-caslon">
-                          <strong className="font-headline text-[#18181B]">Key Takeaway:</strong> Adoption surges by <span className="font-semibold text-purple-700">+47.1% overall</span> at a <span className="font-semibold text-purple-700">25.7% CAGR</span>, fueled by domestic compute clusters and multimodal document AI.
+                          <strong className="font-headline text-[#18181B]">Main Takeaway:</strong> Enterprise adoption expands from 31.4% to 78.5% at a <span className="font-semibold text-purple-700">25.7% CAGR</span>, propelled by domestic compute infrastructure and multimodal AI document intelligence.
                         </p>
 
                         <div className="pt-1">
                           <span className="inline-block bg-[#EFE9DD] text-[#18181B] font-mono font-semibold px-2 py-0.5 rounded text-[10px] border border-[#DCD5C8]">
-                            Source: Page 1, 图表 1.2 (Figure 1.2)
+                            Source: Page 1, 《中国企业级人工智能采用趋势白皮书》 • 图表 1.2
                           </span>
                         </div>
                       </div>
